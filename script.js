@@ -125,11 +125,10 @@ async function loadRemoteSettings() {
 const music = document.getElementById("birthdayMusic");
 const envelope = document.querySelector(".envelope-wrapper");
 const clickInstruction = document.querySelector(".click-instruction");
+const musicSource = music ? music.querySelector("source") : null;
 let wishes = settings.wishes;
 let quizQuestions = settings.quiz;
 let carouselPhotos = settings.carousel;
-let fallbackAudio;
-let fallbackInterval;
 let currentQuizIndex = 0;
 let quizScore = 0;
 let carouselIndex = 0;
@@ -347,8 +346,15 @@ function applySettings() {
     setText(".letter h1", settings.heroTitle);
     setText(".letter p", settings.heroMessage);
     setText(".love-reasons h2", settings.loveTitle);
-    if (settings.musicSrc && music) {
-        music.src = settings.musicSrc;
+    if (music) {
+        const selectedSrc = settings.musicSrc && settings.musicSrc.trim() ? settings.musicSrc : "musik.mp3";
+        if (musicSource) {
+            musicSource.src = selectedSrc;
+        } else {
+            music.src = selectedSrc;
+        }
+        music.loop = true;
+        music.preload = "auto";
         music.load();
     }
     renderReasons();
@@ -393,50 +399,34 @@ function createConfettiPiece() {
     }, 3800);
 }
 
-function playFallbackMelody() {
-    if (fallbackInterval) return;
-
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-
-    fallbackAudio = fallbackAudio || new AudioContext();
-    const notes = [523.25, 587.33, 659.25, 783.99, 659.25, 587.33];
-    let index = 0;
-
-    function playNote() {
-        const oscillator = fallbackAudio.createOscillator();
-        const gain = fallbackAudio.createGain();
-
-        oscillator.type = "sine";
-        oscillator.frequency.value = notes[index % notes.length];
-        gain.gain.setValueAtTime(0.0001, fallbackAudio.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.08, fallbackAudio.currentTime + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, fallbackAudio.currentTime + 0.45);
-
-        oscillator.connect(gain);
-        gain.connect(fallbackAudio.destination);
-        oscillator.start();
-        oscillator.stop(fallbackAudio.currentTime + 0.5);
-        index++;
-    }
-
-    playNote();
-    fallbackInterval = setInterval(playNote, 650);
-}
-
-function stopFallbackMelody() {
-    clearInterval(fallbackInterval);
-    fallbackInterval = null;
-}
-
 async function startMusic() {
-    try {
-        if (music) {
-            await music.play();
+    if (!music) return;
+
+    const ensurePlayable = () => new Promise((resolve) => {
+        if (music.readyState >= 2) {
+            resolve();
             return;
         }
+
+        const onReady = () => {
+            music.removeEventListener("canplay", onReady);
+            music.removeEventListener("loadedmetadata", onReady);
+            resolve();
+        };
+
+        music.addEventListener("canplay", onReady, { once: true });
+        music.addEventListener("loadedmetadata", onReady, { once: true });
+        music.load();
+    });
+
+    try {
+        music.loop = true;
+        music.muted = false;
+        await ensurePlayable();
+        await music.play();
     } catch (error) {
-        playFallbackMelody();
+        // Browser bisa menolak pemutaran bila interaksi dianggap belum valid.
+        // Musik akan dicoba lagi pada interaksi berikutnya (klik amplop/kejutan).
     }
 }
 
