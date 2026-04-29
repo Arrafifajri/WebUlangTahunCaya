@@ -1,5 +1,6 @@
 const SETTINGS_KEY = "cayaBirthdaySettings";
 const ADMIN_SESSION_KEY = "cayaDashboardPassword";
+let currentSettings;
 
 const defaultSettings = {
     unlockDate: "2026-05-06",
@@ -11,6 +12,8 @@ const defaultSettings = {
     heroMessage: "Sejauh langit membentang, sebanyak itu doaku buat kamu. I love you!",
     lockedInstruction: "Tunggu sampai 06 Mei ya...",
     unlockedInstruction: "Tap amplopnya buat buka 💌",
+    musicSrc: "",
+    musicName: "",
     loveTitle: "Kenapa Aku Sayang Kamu 💙",
     reasons: [
         "Karena senyummu bikin tenang",
@@ -166,6 +169,7 @@ function parseJson(id) {
 
 async function fillForm() {
     const data = await getSavedSettings();
+    currentSettings = structuredClone(data);
 
     Object.entries(data).forEach(([key, value]) => {
         const field = $(key);
@@ -179,7 +183,7 @@ async function fillForm() {
     });
 
     $("letterParagraphs").value = data.letterParagraphs.join("\n\n");
-    renderImagePreviews();
+    renderGuiEditors();
 }
 
 function collectSettings() {
@@ -195,14 +199,16 @@ function collectSettings() {
         unlockedInstruction: $("unlockedInstruction").value.trim(),
         loveTitle: $("loveTitle").value.trim(),
         reasons: parseLines("reasons"),
-        littleThings: parseJson("littleThings"),
-        polaroids: parseJson("polaroids"),
-        detailedTimeline: parseJson("detailedTimeline"),
+        musicSrc: currentSettings.musicSrc || "",
+        musicName: currentSettings.musicName || "",
+        littleThings: collectLittleThings(),
+        polaroids: collectPolaroids(),
+        detailedTimeline: collectTimeline(),
         wishes: parseLines("wishes"),
-        playlist: parseJson("playlist"),
-        memoryMap: parseJson("memoryMap"),
-        quiz: parseJson("quiz"),
-        carousel: parseJson("carousel"),
+        playlist: collectPlaylist(),
+        memoryMap: collectMemoryMap(),
+        quiz: collectQuiz(),
+        carousel: collectCarousel(),
         letterTitle: $("letterTitle").value.trim(),
         letterParagraphs: parseParagraphs("letterParagraphs"),
         surpriseTitle: $("surpriseTitle").value.trim(),
@@ -251,40 +257,6 @@ async function saveSettings() {
     }
 }
 
-function readJsonField(id, fallback) {
-    try {
-        return JSON.parse($(id).value);
-    } catch (error) {
-        return fallback;
-    }
-}
-
-function writeJsonField(id, value) {
-    $(id).value = pretty(value);
-}
-
-function setPreview(id, src) {
-    const image = $(id);
-    if (!image) return;
-
-    if (src) {
-        image.src = src;
-    } else {
-        image.removeAttribute("src");
-    }
-}
-
-function renderImagePreviews() {
-    const polaroids = readJsonField("polaroids", []);
-    const carousel = readJsonField("carousel", []);
-
-    setPreview("polaroidPreview0", polaroids[0]?.image);
-    setPreview("polaroidPreview1", polaroids[1]?.image);
-    setPreview("carouselPreview0", carousel[0]?.src);
-    setPreview("carouselPreview1", carousel[1]?.src);
-    setPreview("carouselPreview2", carousel[2]?.src);
-}
-
 function compressImage(file, maxSize = 1400, quality = 0.82) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -317,15 +289,14 @@ async function uploadPolaroidImage(event, index) {
     if (!file) return;
 
     const dataUrl = await compressImage(file);
-    const polaroids = readJsonField("polaroids", defaultSettings.polaroids);
+    const polaroids = currentSettings.polaroids;
 
     polaroids[index] = {
         ...(polaroids[index] || { title: `Foto ${index + 1}`, alt: `Foto ${index + 1}`, caption: "" }),
         image: dataUrl
     };
 
-    writeJsonField("polaroids", polaroids);
-    renderImagePreviews();
+    renderPolaroidEditor();
     $("statusText").textContent = "Gambar polaroid sudah masuk. Jangan lupa klik Simpan Pengaturan.";
     $("statusText").style.color = "#075985";
 }
@@ -335,17 +306,231 @@ async function uploadCarouselImage(event, index) {
     if (!file) return;
 
     const dataUrl = await compressImage(file);
-    const carousel = readJsonField("carousel", defaultSettings.carousel);
+    const carousel = currentSettings.carousel;
 
     carousel[index] = {
         ...(carousel[index] || { title: `Foto ${index + 1}`, caption: "" }),
         src: dataUrl
     };
 
-    writeJsonField("carousel", carousel);
-    renderImagePreviews();
+    renderCarouselEditor();
     $("statusText").textContent = "Gambar carousel sudah masuk. Jangan lupa klik Simpan Pengaturan.";
     $("statusText").style.color = "#075985";
+}
+
+function renderGuiEditors() {
+    currentSettings.littleThings ||= [];
+    currentSettings.detailedTimeline ||= [];
+    currentSettings.polaroids ||= [];
+    currentSettings.carousel ||= [];
+    currentSettings.playlist ||= [];
+    currentSettings.memoryMap ||= [];
+    currentSettings.quiz ||= [];
+    $("musicFileName").textContent = currentSettings.musicName || (currentSettings.musicSrc ? "Musik dashboard tersimpan." : "Belum ada musik upload.");
+    renderLittleThingsEditor();
+    renderTimelineEditor();
+    renderPolaroidEditor();
+    renderCarouselEditor();
+    renderPlaylistEditor();
+    renderMemoryMapEditor();
+    renderQuizEditor();
+}
+
+function cardShell(title, onRemove) {
+    const card = document.createElement("article");
+    card.className = "edit-card";
+    const head = document.createElement("div");
+    head.className = "edit-card-head";
+    head.innerHTML = `<h4>${title}</h4>`;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "danger-button";
+    button.textContent = "Hapus";
+    button.onclick = onRemove;
+    head.appendChild(button);
+    card.appendChild(head);
+    return card;
+}
+
+function inputField(labelText, value, onInput, multiline = false) {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+    const field = document.createElement(multiline ? "textarea" : "input");
+    if (multiline) field.rows = 3;
+    field.value = value || "";
+    field.oninput = () => onInput(field.value);
+    label.appendChild(field);
+    return label;
+}
+
+function imagePicker(labelText, src, onChange) {
+    const label = document.createElement("label");
+    label.className = "upload-box compact-upload";
+    label.textContent = labelText;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = onChange;
+    const img = document.createElement("img");
+    if (src) img.src = src;
+    label.append(input, img);
+    return label;
+}
+
+function renderLittleThingsEditor() {
+    const target = $("littleThingsEditor");
+    target.innerHTML = "";
+    currentSettings.littleThings.forEach((item, index) => {
+        const card = cardShell(`Item ${index + 1}`, () => {
+            currentSettings.littleThings.splice(index, 1);
+            renderLittleThingsEditor();
+        });
+        card.append(inputField("Label", item.label, (value) => item.label = value), inputField("Isi", item.value, (value) => item.value = value, true));
+        target.appendChild(card);
+    });
+}
+
+function renderTimelineEditor() {
+    const target = $("timelineEditor");
+    target.innerHTML = "";
+    currentSettings.detailedTimeline.forEach((item, index) => {
+        const card = cardShell(`Timeline ${index + 1}`, () => {
+            currentSettings.detailedTimeline.splice(index, 1);
+            renderTimelineEditor();
+        });
+        card.append(inputField("Judul", item.title, (value) => item.title = value), inputField("Tanggal", item.date, (value) => item.date = value), inputField("Cerita", item.text, (value) => item.text = value, true));
+        target.appendChild(card);
+    });
+}
+
+function renderPolaroidEditor() {
+    const target = $("polaroidEditor");
+    target.innerHTML = "";
+    currentSettings.polaroids.forEach((item, index) => {
+        const card = cardShell(`Polaroid ${index + 1}`, () => {
+            currentSettings.polaroids.splice(index, 1);
+            renderPolaroidEditor();
+        });
+        card.append(imagePicker("Upload foto", item.image, (event) => uploadPolaroidImage(event, index)), inputField("Judul", item.title, (value) => item.title = value), inputField("Alt foto", item.alt, (value) => item.alt = value), inputField("Caption", item.caption, (value) => item.caption = value, true));
+        target.appendChild(card);
+    });
+}
+
+function renderCarouselEditor() {
+    const target = $("carouselEditor");
+    target.innerHTML = "";
+    currentSettings.carousel.forEach((item, index) => {
+        const card = cardShell(`Carousel ${index + 1}`, () => {
+            currentSettings.carousel.splice(index, 1);
+            renderCarouselEditor();
+        });
+        card.append(imagePicker("Upload foto", item.src, (event) => uploadCarouselImage(event, index)), inputField("Judul", item.title, (value) => item.title = value), inputField("Caption", item.caption, (value) => item.caption = value, true));
+        target.appendChild(card);
+    });
+}
+
+function renderPlaylistEditor() {
+    const target = $("playlistEditor");
+    target.innerHTML = "";
+    currentSettings.playlist.forEach((item, index) => {
+        const card = cardShell(`Lagu ${index + 1}`, () => {
+            currentSettings.playlist.splice(index, 1);
+            renderPlaylistEditor();
+        });
+        card.append(inputField("Judul", item.title, (value) => item.title = value), inputField("Deskripsi", item.text, (value) => item.text = value, true), inputField("Link", item.link, (value) => item.link = value));
+        target.appendChild(card);
+    });
+}
+
+function renderMemoryMapEditor() {
+    const target = $("memoryMapEditor");
+    target.innerHTML = "";
+    currentSettings.memoryMap.forEach((item, index) => {
+        const card = cardShell(`Tempat ${index + 1}`, () => {
+            currentSettings.memoryMap.splice(index, 1);
+            renderMemoryMapEditor();
+        });
+        card.append(inputField("Nama tempat", item.title, (value) => item.title = value), inputField("Cerita", item.text, (value) => item.text = value, true));
+        target.appendChild(card);
+    });
+}
+
+function renderQuizEditor() {
+    const target = $("quizEditor");
+    target.innerHTML = "";
+    currentSettings.quiz.forEach((item, index) => {
+        item.options ||= ["", "", ""];
+        const card = cardShell(`Pertanyaan ${index + 1}`, () => {
+            currentSettings.quiz.splice(index, 1);
+            renderQuizEditor();
+        });
+        card.append(inputField("Pertanyaan", item.question, (value) => item.question = value, true), inputField("Pilihan 1", item.options[0], (value) => item.options[0] = value), inputField("Pilihan 2", item.options[1], (value) => item.options[1] = value), inputField("Pilihan 3", item.options[2], (value) => item.options[2] = value), inputField("Jawaban benar (1/2/3)", String((item.answer || 0) + 1), (value) => item.answer = Math.max(0, Math.min(2, Number(value) - 1 || 0))));
+        target.appendChild(card);
+    });
+}
+
+function collectLittleThings() { return currentSettings.littleThings; }
+function collectTimeline() { return currentSettings.detailedTimeline; }
+function collectPolaroids() { return currentSettings.polaroids; }
+function collectCarousel() { return currentSettings.carousel; }
+function collectPlaylist() { return currentSettings.playlist; }
+function collectMemoryMap() { return currentSettings.memoryMap; }
+function collectQuiz() { return currentSettings.quiz; }
+
+function addLittleThing() {
+    currentSettings.littleThings.push({ label: "Label baru", value: "Isi baru" });
+    renderLittleThingsEditor();
+}
+
+function addTimelineItem() {
+    currentSettings.detailedTimeline.push({ title: "Momen baru", text: "Tulis ceritanya di sini.", date: "Tanggal" });
+    renderTimelineEditor();
+}
+
+function addPolaroid() {
+    currentSettings.polaroids.push({ image: "", title: "Foto baru", alt: "Foto baru", caption: "Tulis caption foto." });
+    renderPolaroidEditor();
+}
+
+function addCarouselItem() {
+    currentSettings.carousel.push({ src: "", title: "Foto baru", caption: "Tulis caption foto." });
+    renderCarouselEditor();
+}
+
+function addPlaylistItem() {
+    currentSettings.playlist.push({ title: "Lagu baru", text: "Tulis cerita lagunya.", link: "https://" });
+    renderPlaylistEditor();
+}
+
+function addMapItem() {
+    currentSettings.memoryMap.push({ title: "Tempat baru", text: "Tulis cerita tempatnya." });
+    renderMemoryMapEditor();
+}
+
+function addQuizItem() {
+    currentSettings.quiz.push({ question: "Pertanyaan baru?", options: ["Pilihan 1", "Pilihan 2", "Pilihan 3"], answer: 0 });
+    renderQuizEditor();
+}
+
+function uploadMusic(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 4 * 1024 * 1024) {
+        $("statusText").textContent = "File musik terlalu besar. Pakai audio pendek di bawah 4 MB agar aman disimpan.";
+        $("statusText").style.color = "#b91c1c";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        currentSettings.musicSrc = reader.result;
+        currentSettings.musicName = file.name;
+        $("musicFileName").textContent = file.name;
+        $("statusText").textContent = "Musik sudah masuk. Jangan lupa klik Simpan Pengaturan.";
+        $("statusText").style.color = "#075985";
+    };
+    reader.readAsDataURL(file);
 }
 
 function resetSettings() {

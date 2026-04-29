@@ -9,6 +9,8 @@ const defaultSettings = {
     heroMessage: "Sejauh langit membentang, sebanyak itu doaku buat kamu. I love you!",
     lockedInstruction: "Tunggu sampai 06 Mei ya...",
     unlockedInstruction: "Tap amplopnya buat buka 💌",
+    musicSrc: "",
+    musicName: "",
     loveTitle: "Kenapa Aku Sayang Kamu 💙",
     reasons: [
         "Karena senyummu bikin tenang",
@@ -346,6 +348,10 @@ function applySettings() {
     setText(".letter h1", settings.heroTitle);
     setText(".letter p", settings.heroMessage);
     setText(".love-reasons h2", settings.loveTitle);
+    if (settings.musicSrc && music) {
+        music.src = settings.musicSrc;
+        music.load();
+    }
     renderReasons();
     renderPolaroids();
     renderDetailedTimeline();

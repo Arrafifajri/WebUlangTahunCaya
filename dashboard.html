@@ -103,49 +103,48 @@
                     Alasan sayang, satu baris satu kartu
                     <textarea id="reasons" rows="5"></textarea>
                 </label>
-                <label>
-                    Hal-hal kecil, format JSON
-                    <textarea id="littleThings" rows="8" spellcheck="false"></textarea>
-                </label>
-                <label>
-                    Polaroid, format JSON
-                    <textarea id="polaroids" rows="9" spellcheck="false"></textarea>
-                </label>
-                <label>
-                    Timeline detail, format JSON
-                    <textarea id="detailedTimeline" rows="9" spellcheck="false"></textarea>
-                </label>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Hal-hal kecil</h3>
+                        <button type="button" class="ghost-button" onclick="addLittleThing()">Tambah</button>
+                    </div>
+                    <div id="littleThingsEditor" class="card-editor"></div>
+                </div>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Timeline detail</h3>
+                        <button type="button" class="ghost-button" onclick="addTimelineItem()">Tambah</button>
+                    </div>
+                    <div id="timelineEditor" class="card-editor"></div>
+                </div>
             </section>
 
             <section id="images" class="panel">
-                <h2>Upload Gambar</h2>
-                <p class="panel-note">Pilih gambar, dashboard akan kompres otomatis dan menyimpannya ke setting. Setelah itu klik Simpan Pengaturan.</p>
-                <div class="upload-grid">
-                    <label class="upload-box">
-                        Foto polaroid 1
-                        <input type="file" accept="image/*" onchange="uploadPolaroidImage(event, 0)">
-                        <img id="polaroidPreview0" alt="">
+                <h2>Media Upload</h2>
+                <p class="panel-note">Semua foto dan musik diatur dari dashboard. Upload gambar akan dikompres otomatis sebelum disimpan.</p>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Musik</h3>
+                    </div>
+                    <label class="upload-box music-upload">
+                        Musik background
+                        <input id="musicUpload" type="file" accept="audio/*" onchange="uploadMusic(event)">
+                        <span id="musicFileName">Belum ada musik upload.</span>
                     </label>
-                    <label class="upload-box">
-                        Foto polaroid 2
-                        <input type="file" accept="image/*" onchange="uploadPolaroidImage(event, 1)">
-                        <img id="polaroidPreview1" alt="">
-                    </label>
-                    <label class="upload-box">
-                        Carousel 1
-                        <input type="file" accept="image/*" onchange="uploadCarouselImage(event, 0)">
-                        <img id="carouselPreview0" alt="">
-                    </label>
-                    <label class="upload-box">
-                        Carousel 2
-                        <input type="file" accept="image/*" onchange="uploadCarouselImage(event, 1)">
-                        <img id="carouselPreview1" alt="">
-                    </label>
-                    <label class="upload-box">
-                        Carousel 3
-                        <input type="file" accept="image/*" onchange="uploadCarouselImage(event, 2)">
-                        <img id="carouselPreview2" alt="">
-                    </label>
+                </div>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Foto polaroid</h3>
+                        <button type="button" class="ghost-button" onclick="addPolaroid()">Tambah</button>
+                    </div>
+                    <div id="polaroidEditor" class="card-editor"></div>
+                </div>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Carousel foto</h3>
+                        <button type="button" class="ghost-button" onclick="addCarouselItem()">Tambah</button>
+                    </div>
+                    <div id="carouselEditor" class="card-editor"></div>
                 </div>
             </section>
 
@@ -155,22 +154,27 @@
                     Wish Jar, satu baris satu doa
                     <textarea id="wishes" rows="6"></textarea>
                 </label>
-                <label>
-                    Playlist, format JSON
-                    <textarea id="playlist" rows="8" spellcheck="false"></textarea>
-                </label>
-                <label>
-                    Memory Map, format JSON
-                    <textarea id="memoryMap" rows="8" spellcheck="false"></textarea>
-                </label>
-                <label>
-                    Mini Quiz, format JSON
-                    <textarea id="quiz" rows="10" spellcheck="false"></textarea>
-                </label>
-                <label>
-                    Carousel foto, format JSON
-                    <textarea id="carousel" rows="8" spellcheck="false"></textarea>
-                </label>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Playlist</h3>
+                        <button type="button" class="ghost-button" onclick="addPlaylistItem()">Tambah</button>
+                    </div>
+                    <div id="playlistEditor" class="card-editor"></div>
+                </div>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Memory Map</h3>
+                        <button type="button" class="ghost-button" onclick="addMapItem()">Tambah</button>
+                    </div>
+                    <div id="memoryMapEditor" class="card-editor"></div>
+                </div>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Mini Quiz</h3>
+                        <button type="button" class="ghost-button" onclick="addQuizItem()">Tambah</button>
+                    </div>
+                    <div id="quizEditor" class="card-editor"></div>
+                </div>
             </section>
 
             <section id="ending" class="panel">

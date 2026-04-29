@@ -274,6 +274,68 @@ textarea:focus {
     display: block;
 }
 
+.editor-group {
+    margin-top: 18px;
+}
+
+.group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.group-heading h3 {
+    color: #17324d;
+    font-size: 1.05rem;
+}
+
+.card-editor {
+    display: grid;
+    gap: 14px;
+}
+
+.edit-card {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #cfe8f8;
+    border-radius: 18px;
+    background: #f8fcff;
+}
+
+.edit-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.edit-card-head h4 {
+    color: #075985;
+    font-size: 0.98rem;
+}
+
+.danger-button {
+    padding: 8px 12px;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.compact-upload {
+    min-height: auto;
+    margin-bottom: 0;
+}
+
+.music-upload span {
+    display: block;
+    margin-top: 8px;
+    color: #075985;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
 .bottom-actions {
     position: sticky;
     bottom: 16px;
