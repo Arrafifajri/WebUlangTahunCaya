@@ -73,8 +73,11 @@ const defaultSettings = {
 };
 
 const SETTINGS_KEY = "birthday-settings";
-const MAX_SETTINGS_JSON_BYTES = 1_500_000;
-const CREATE_TABLE_SQL =
+const MAX_SETTINGS_JSON_BYTES = 60_000_000;
+const CHUNK_SIZE = 200_000;
+const CREATE_CHUNK_TABLE_SQL =
+    "CREATE TABLE IF NOT EXISTS site_settings_chunks (id TEXT NOT NULL, chunk_index INTEGER NOT NULL, chunk_text TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id, chunk_index))";
+const CREATE_LEGACY_TABLE_SQL =
     "CREATE TABLE IF NOT EXISTS site_settings (id TEXT PRIMARY KEY, settings_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)";
 
 function json(data, init = {}) {
@@ -98,19 +101,27 @@ async function readSettings(env) {
         return defaultSettings;
     }
 
-    await env.SETTINGS_DB.prepare(CREATE_TABLE_SQL).run();
+    await env.SETTINGS_DB.prepare(CREATE_CHUNK_TABLE_SQL).run();
+    await env.SETTINGS_DB.prepare(CREATE_LEGACY_TABLE_SQL).run();
 
-    const row = await env.SETTINGS_DB
-        .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
+    const chunkRows = await env.SETTINGS_DB
+        .prepare("SELECT chunk_text FROM site_settings_chunks WHERE id = ?1 ORDER BY chunk_index ASC")
         .bind(SETTINGS_KEY)
-        .first();
+        .all();
 
-    if (!row || !row.settings_json) {
-        return defaultSettings;
+    let payload = "";
+    if (chunkRows?.results?.length) {
+        payload = chunkRows.results.map((row) => row.chunk_text || "").join("");
+    } else {
+        const row = await env.SETTINGS_DB
+            .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
+            .bind(SETTINGS_KEY)
+            .first();
+        payload = row?.settings_json || "";
     }
 
     try {
-        return { ...defaultSettings, ...JSON.parse(row.settings_json) };
+        return payload ? { ...defaultSettings, ...JSON.parse(payload) } : defaultSettings;
     } catch (error) {
         return defaultSettings;
     }
@@ -162,7 +173,27 @@ export async function onRequestPost({ request, env }) {
             );
         }
 
-        await env.SETTINGS_DB.prepare(CREATE_TABLE_SQL).run();
+        await env.SETTINGS_DB.prepare(CREATE_CHUNK_TABLE_SQL).run();
+        await env.SETTINGS_DB.prepare(CREATE_LEGACY_TABLE_SQL).run();
+
+        await env.SETTINGS_DB
+            .prepare("DELETE FROM site_settings_chunks WHERE id = ?1")
+            .bind(SETTINGS_KEY)
+            .run();
+
+        const chunks = [];
+        for (let i = 0; i < settingsJson.length; i += CHUNK_SIZE) {
+            chunks.push(settingsJson.slice(i, i + CHUNK_SIZE));
+        }
+
+        for (let index = 0; index < chunks.length; index++) {
+            await env.SETTINGS_DB
+                .prepare(
+                    "INSERT INTO site_settings_chunks (id, chunk_index, chunk_text, updated_at) VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)"
+                )
+                .bind(SETTINGS_KEY, index, chunks[index])
+                .run();
+        }
 
         await env.SETTINGS_DB
             .prepare(`
@@ -172,7 +203,7 @@ export async function onRequestPost({ request, env }) {
                     settings_json = excluded.settings_json,
                     updated_at = CURRENT_TIMESTAMP
             `)
-            .bind(SETTINGS_KEY, settingsJson)
+            .bind(SETTINGS_KEY, chunks[0] || "{}")
             .run();
 
         return json({ ok: true, settings });
