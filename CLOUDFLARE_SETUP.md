@@ -12,8 +12,17 @@ Project ini sekarang memakai:
 1. Push folder ini ke GitHub.
 2. Buat project baru di Cloudflare Pages.
 3. Pilih repo project ini.
-4. Build command boleh dikosongkan.
-5. Build output directory: `.`
+4. Build command dikosongkan.
+5. Deploy command dikosongkan.
+6. Build output directory: `/`
+
+Jangan isi deploy command dengan:
+
+```bash
+npx wrangler pages deploy .
+```
+
+Git deploy Cloudflare Pages tidak butuh command itu. Kalau command itu dipakai, Cloudflare akan mencoba login Wrangler memakai API token dan bisa gagal dengan `Authentication error [code: 10000]`.
 
 ## KV
 

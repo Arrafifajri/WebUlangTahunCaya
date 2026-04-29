@@ -186,8 +186,16 @@ async function saveSettings() {
         });
 
         if (!response.ok) {
-            const result = await response.json().catch(() => ({ error: "Gagal menyimpan ke API." }));
-            throw new Error(result.error || "Gagal menyimpan ke API.");
+            const text = await response.text();
+            let message = text;
+
+            try {
+                message = JSON.parse(text).error || text;
+            } catch (error) {
+                message = text || `HTTP ${response.status}`;
+            }
+
+            throw new Error(`API ${response.status}: ${message}`);
         }
 
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
