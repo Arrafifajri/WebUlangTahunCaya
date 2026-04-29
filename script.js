@@ -123,7 +123,6 @@ async function loadRemoteSettings() {
 }
 
 const music = document.getElementById("birthdayMusic");
-const musicToggle = document.getElementById("musicToggle");
 const envelope = document.querySelector(".envelope-wrapper");
 const clickInstruction = document.querySelector(".click-instruction");
 let wishes = settings.wishes;
@@ -430,44 +429,15 @@ function stopFallbackMelody() {
     fallbackInterval = null;
 }
 
-function setMusicState(isPlaying) {
-    musicToggle.classList.toggle("is-playing", isPlaying);
-    musicToggle.textContent = isPlaying ? "\u275A\u275A" : "\u266A";
-}
-
 async function startMusic() {
     try {
         if (music) {
             await music.play();
-            setMusicState(true);
             return;
         }
     } catch (error) {
         playFallbackMelody();
-        setMusicState(true);
     }
-}
-
-function toggleMusic() {
-    if (!isBirthdayUnlocked()) {
-        alert("Musiknya ikut kebuka tanggal 06 Mei ya.");
-        return;
-    }
-
-    if (music && !music.paused) {
-        music.pause();
-        stopFallbackMelody();
-        setMusicState(false);
-        return;
-    }
-
-    if (fallbackInterval) {
-        stopFallbackMelody();
-        setMusicState(false);
-        return;
-    }
-
-    startMusic();
 }
 
 function goToSection(selector) {

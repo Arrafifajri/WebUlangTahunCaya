@@ -29,10 +29,6 @@ body.content-locked main {
     display: none;
 }
 
-body.content-locked .music-toggle {
-    opacity: 0.45;
-}
-
 body.envelope-open .gate-countdown {
     display: none;
 }
@@ -57,31 +53,6 @@ body.envelope-open .gate-countdown {
     position: relative;
     cursor: pointer; /* Kursor berubah jadi jari saat diarahkan */
     text-align: center;
-}
-
-.music-toggle {
-    position: fixed;
-    right: 18px;
-    top: 18px;
-    width: 46px;
-    height: 46px;
-    border: 0;
-    border-radius: 50%;
-    background: #ffffff;
-    color: #0077b6;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 12px 24px rgba(0,119,182,0.18);
-    z-index: 200;
-    transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
-}
-
-.music-toggle:hover,
-.music-toggle.is-playing {
-    transform: translateY(-2px);
-    background: #0077b6;
-    color: #ffffff;
 }
 
 .gate-countdown {
@@ -1280,13 +1251,6 @@ textarea:focus {
     textarea {
         padding: 15px;
         font-size: 0.95rem;
-    }
-
-    .music-toggle {
-        right: 14px;
-        top: 14px;
-        width: 42px;
-        height: 42px;
     }
 
     .countdown-grid {
