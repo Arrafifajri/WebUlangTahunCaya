@@ -249,7 +249,7 @@ async function saveSettings() {
         }
 
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
-        status.textContent = "Tersimpan ke Cloudflare KV. Refresh index.html untuk melihat perubahan.";
+        status.textContent = "Tersimpan ke Cloudflare D1. Refresh index.html untuk melihat perubahan.";
         status.style.color = "#047857";
     } catch (error) {
         status.textContent = `${error.message} Perubahan belum disimpan ke Cloudflare.`;

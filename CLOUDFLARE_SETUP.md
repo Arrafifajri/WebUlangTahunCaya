@@ -4,7 +4,7 @@ Project ini sekarang memakai:
 
 - Static frontend: `index.html`, `dashboard.html`, CSS, JS
 - Cloudflare Pages Functions: `functions/api/settings.js`
-- Cloudflare KV: menyimpan isi dashboard
+- Cloudflare D1: menyimpan isi dashboard
 - Secret `ADMIN_PASSWORD`: melindungi tombol simpan dashboard
 
 ## Deploy
@@ -24,16 +24,16 @@ npx wrangler pages deploy .
 
 Git deploy Cloudflare Pages tidak butuh command itu. Kalau command itu dipakai, Cloudflare akan mencoba login Wrangler memakai API token dan bisa gagal dengan `Authentication error [code: 10000]`.
 
-## KV
+## D1
 
-1. Di Cloudflare, buat KV namespace baru, misalnya `birthday_settings`.
+1. Di Cloudflare, buat D1 database baru, misalnya `birthday_settings_db`.
 2. Buka project Pages.
-3. Masuk ke Settings > Functions > KV namespace bindings.
+3. Masuk ke Settings > Functions > D1 bindings.
 4. Tambahkan binding:
 
 ```text
-Variable name: SETTINGS_KV
-KV namespace: birthday_settings
+Variable name: SETTINGS_DB
+Database: birthday_settings_db
 ```
 
 Kalau tombol binding terkunci dan muncul pesan "Bindings for this project are being managed through wrangler.toml", hapus file `wrangler.toml` dari repo GitHub, lalu redeploy. Setelah itu binding bisa ditambahkan lewat UI Cloudflare.

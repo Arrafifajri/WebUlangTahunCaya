@@ -91,12 +91,32 @@ function isAuthorized(request, env) {
 }
 
 async function readSettings(env) {
-    if (!env.SETTINGS_KV) {
+    if (!env.SETTINGS_DB) {
         return defaultSettings;
     }
 
-    const saved = await env.SETTINGS_KV.get(SETTINGS_KEY, "json");
-    return { ...defaultSettings, ...(saved || {}) };
+    await env.SETTINGS_DB.exec(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+            id TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    const row = await env.SETTINGS_DB
+        .prepare("SELECT value FROM site_settings WHERE id = ?1")
+        .bind(SETTINGS_KEY)
+        .first();
+
+    if (!row || !row.value) {
+        return defaultSettings;
+    }
+
+    try {
+        return { ...defaultSettings, ...JSON.parse(row.value) };
+    } catch (error) {
+        return defaultSettings;
+    }
 }
 
 export async function onRequestGet({ env }) {
@@ -109,8 +129,8 @@ export async function onRequestPost({ request, env }) {
         return json({ error: "Password dashboard salah atau ADMIN_PASSWORD belum diset." }, { status: 401 });
     }
 
-    if (!env.SETTINGS_KV) {
-        return json({ error: "Binding SETTINGS_KV belum diset di Cloudflare Pages." }, { status: 500 });
+    if (!env.SETTINGS_DB) {
+        return json({ error: "Binding D1 SETTINGS_DB belum diset di Cloudflare Pages." }, { status: 500 });
     }
 
     let body;
@@ -121,6 +141,24 @@ export async function onRequestPost({ request, env }) {
     }
 
     const settings = { ...defaultSettings, ...body };
-    await env.SETTINGS_KV.put(SETTINGS_KEY, JSON.stringify(settings));
+    await env.SETTINGS_DB.exec(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+            id TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    await env.SETTINGS_DB
+        .prepare(`
+            INSERT INTO site_settings (id, value, updated_at)
+            VALUES (?1, ?2, CURRENT_TIMESTAMP)
+            ON CONFLICT(id) DO UPDATE SET
+                value = excluded.value,
+                updated_at = CURRENT_TIMESTAMP
+        `)
+        .bind(SETTINGS_KEY, JSON.stringify(settings))
+        .run();
+
     return json({ ok: true, settings });
 }
