@@ -15,6 +15,66 @@ body {
     font-family: Inter, sans-serif;
 }
 
+body.dashboard-locked {
+    overflow: hidden;
+}
+
+body.dashboard-locked .dashboard-header,
+body.dashboard-locked .dashboard-layout {
+    display: none;
+}
+
+.login-screen {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: linear-gradient(180deg, #dff3ff, #edf7ff);
+    z-index: 100;
+}
+
+body:not(.dashboard-locked) .login-screen {
+    display: none;
+}
+
+.login-card {
+    width: min(100%, 430px);
+    padding: 28px;
+    border: 1px solid #cfe8f8;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 22px 60px rgba(0,119,182,0.14);
+}
+
+.login-card p {
+    color: #0077b6;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.login-card h1 {
+    margin-bottom: 22px;
+    color: #17324d;
+    font-size: 1.8rem;
+}
+
+.login-card button {
+    width: 100%;
+}
+
+#loginStatus {
+    display: block;
+    min-height: 24px;
+    margin-top: 14px;
+    color: #b91c1c;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
 .dashboard-header {
     position: sticky;
     top: 0;
@@ -123,12 +183,17 @@ button {
     font-size: 1.8rem;
 }
 
-.auth-panel p {
+.auth-panel p,
+.panel-note {
     margin-top: -4px;
     color: #64748b;
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1.6;
+}
+
+.panel-note {
+    margin-bottom: 18px;
 }
 
 .field-grid {
@@ -173,6 +238,40 @@ input:focus,
 textarea:focus {
     border-color: #0077b6;
     box-shadow: 0 0 0 4px rgba(0,119,182,0.12);
+}
+
+.upload-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+}
+
+.upload-box {
+    min-height: 220px;
+    padding: 16px;
+    border: 1px dashed #8ccff3;
+    border-radius: 18px;
+    background: #f8fcff;
+}
+
+.upload-box input {
+    padding: 10px;
+    min-height: auto;
+    background: #ffffff;
+}
+
+.upload-box img {
+    display: none;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    margin-top: 12px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: #e0f2fe;
+}
+
+.upload-box img[src] {
+    display: block;
 }
 
 .bottom-actions {

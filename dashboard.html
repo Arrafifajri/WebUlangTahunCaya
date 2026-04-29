@@ -7,7 +7,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
 </head>
-<body>
+<body class="dashboard-locked">
+    <section id="loginScreen" class="login-screen">
+        <form class="login-card" onsubmit="loginDashboard(event)">
+            <p>Birthday Web Control</p>
+            <h1>Masuk Dashboard</h1>
+            <label>
+                Password admin
+                <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Masukkan ADMIN_PASSWORD">
+            </label>
+            <button type="submit" class="primary-button">Masuk</button>
+            <span id="loginStatus"></span>
+        </form>
+    </section>
+
     <header class="dashboard-header">
         <div>
             <p>Birthday Web Control</p>
@@ -16,6 +29,7 @@
         <div class="header-actions">
             <button type="button" class="ghost-button" onclick="resetSettings()">Reset</button>
             <button type="button" class="ghost-button" onclick="window.open('index.html', '_blank')">Preview</button>
+            <button type="button" class="ghost-button" onclick="logoutDashboard()">Logout</button>
             <button type="button" class="primary-button" onclick="saveSettings()">Simpan</button>
         </div>
     </header>
@@ -25,20 +39,12 @@
             <a href="#countdown">Countdown</a>
             <a href="#hero">Amplop</a>
             <a href="#content">Konten</a>
+            <a href="#images">Gambar</a>
             <a href="#interactive">Interaktif</a>
             <a href="#ending">Ending</a>
         </aside>
 
         <form id="settingsForm" class="settings-form">
-            <section class="panel auth-panel">
-                <h2>Akses Admin</h2>
-                <label>
-                    Password dashboard
-                    <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Isi sama dengan ADMIN_PASSWORD di Cloudflare">
-                </label>
-                <p>Password ini tidak disimpan ke file. Browser hanya menyimpannya sementara untuk mengirim perubahan ke API.</p>
-            </section>
-
             <section id="countdown" class="panel">
                 <h2>Countdown</h2>
                 <div class="field-grid">
@@ -109,6 +115,38 @@
                     Timeline detail, format JSON
                     <textarea id="detailedTimeline" rows="9" spellcheck="false"></textarea>
                 </label>
+            </section>
+
+            <section id="images" class="panel">
+                <h2>Upload Gambar</h2>
+                <p class="panel-note">Pilih gambar, dashboard akan kompres otomatis dan menyimpannya ke setting. Setelah itu klik Simpan Pengaturan.</p>
+                <div class="upload-grid">
+                    <label class="upload-box">
+                        Foto polaroid 1
+                        <input type="file" accept="image/*" onchange="uploadPolaroidImage(event, 0)">
+                        <img id="polaroidPreview0" alt="">
+                    </label>
+                    <label class="upload-box">
+                        Foto polaroid 2
+                        <input type="file" accept="image/*" onchange="uploadPolaroidImage(event, 1)">
+                        <img id="polaroidPreview1" alt="">
+                    </label>
+                    <label class="upload-box">
+                        Carousel 1
+                        <input type="file" accept="image/*" onchange="uploadCarouselImage(event, 0)">
+                        <img id="carouselPreview0" alt="">
+                    </label>
+                    <label class="upload-box">
+                        Carousel 2
+                        <input type="file" accept="image/*" onchange="uploadCarouselImage(event, 1)">
+                        <img id="carouselPreview1" alt="">
+                    </label>
+                    <label class="upload-box">
+                        Carousel 3
+                        <input type="file" accept="image/*" onchange="uploadCarouselImage(event, 2)">
+                        <img id="carouselPreview2" alt="">
+                    </label>
+                </div>
             </section>
 
             <section id="interactive" class="panel">

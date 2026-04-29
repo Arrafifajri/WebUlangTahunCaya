@@ -36,6 +36,8 @@ Variable name: SETTINGS_KV
 KV namespace: birthday_settings
 ```
 
+Kalau tombol binding terkunci dan muncul pesan "Bindings for this project are being managed through wrangler.toml", hapus file `wrangler.toml` dari repo GitHub, lalu redeploy. Setelah itu binding bisa ditambahkan lewat UI Cloudflare.
+
 ## Password Dashboard
 
 1. Masuk ke Settings > Environment variables.
