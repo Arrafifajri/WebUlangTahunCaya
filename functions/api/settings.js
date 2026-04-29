@@ -73,6 +73,7 @@ const defaultSettings = {
 };
 
 const SETTINGS_KEY = "birthday-settings";
+const MAX_SETTINGS_JSON_BYTES = 1_500_000;
 
 function json(data, init = {}) {
     return new Response(JSON.stringify(data), {
@@ -120,8 +121,18 @@ async function readSettings(env) {
 }
 
 export async function onRequestGet({ env }) {
-    const settings = await readSettings(env);
-    return json(settings);
+    try {
+        const settings = await readSettings(env);
+        return json(settings);
+    } catch (error) {
+        return json(
+            {
+                error: "Gagal membaca settings dari D1.",
+                detail: String(error && error.message ? error.message : error)
+            },
+            { status: 500 }
+        );
+    }
 }
 
 export async function onRequestPost({ request, env }) {
@@ -133,32 +144,55 @@ export async function onRequestPost({ request, env }) {
         return json({ error: "Binding D1 SETTINGS_DB belum diset di Cloudflare Pages." }, { status: 500 });
     }
 
-    let body;
     try {
-        body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch (error) {
+            return json({ error: "Body harus berupa JSON valid." }, { status: 400 });
+        }
+
+        const settings = { ...defaultSettings, ...body };
+        const settingsJson = JSON.stringify(settings);
+        const settingsBytes = new TextEncoder().encode(settingsJson).length;
+
+        if (settingsBytes > MAX_SETTINGS_JSON_BYTES) {
+            return json(
+                {
+                    error: "Ukuran settings terlalu besar untuk disimpan.",
+                    detail: `Payload ${settingsBytes} bytes melewati batas ${MAX_SETTINGS_JSON_BYTES} bytes. Kurangi ukuran musik/gambar upload.`
+                },
+                { status: 413 }
+            );
+        }
+
+        await env.SETTINGS_DB.exec(`
+            CREATE TABLE IF NOT EXISTS site_settings (
+                id TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await env.SETTINGS_DB
+            .prepare(`
+                INSERT INTO site_settings (id, value, updated_at)
+                VALUES (?1, ?2, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = CURRENT_TIMESTAMP
+            `)
+            .bind(SETTINGS_KEY, settingsJson)
+            .run();
+
+        return json({ ok: true, settings });
     } catch (error) {
-        return json({ error: "Body harus berupa JSON valid." }, { status: 400 });
+        return json(
+            {
+                error: "Gagal menyimpan settings ke D1.",
+                detail: String(error && error.message ? error.message : error)
+            },
+            { status: 500 }
+        );
     }
-
-    const settings = { ...defaultSettings, ...body };
-    await env.SETTINGS_DB.exec(`
-        CREATE TABLE IF NOT EXISTS site_settings (
-            id TEXT PRIMARY KEY,
-            value TEXT NOT NULL,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
-
-    await env.SETTINGS_DB
-        .prepare(`
-            INSERT INTO site_settings (id, value, updated_at)
-            VALUES (?1, ?2, CURRENT_TIMESTAMP)
-            ON CONFLICT(id) DO UPDATE SET
-                value = excluded.value,
-                updated_at = CURRENT_TIMESTAMP
-        `)
-        .bind(SETTINGS_KEY, JSON.stringify(settings))
-        .run();
-
-    return json({ ok: true, settings });
 }
