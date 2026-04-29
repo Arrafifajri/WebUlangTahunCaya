@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Birthday Web</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div>
+            <p>Birthday Web Control</p>
+            <h1>Dashboard Pengaturan</h1>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="ghost-button" onclick="resetSettings()">Reset</button>
+            <button type="button" class="ghost-button" onclick="window.open('index.html', '_blank')">Preview</button>
+            <button type="button" class="primary-button" onclick="saveSettings()">Simpan</button>
+        </div>
+    </header>
+
+    <main class="dashboard-layout">
+        <aside class="side-panel">
+            <a href="#countdown">Countdown</a>
+            <a href="#hero">Amplop</a>
+            <a href="#content">Konten</a>
+            <a href="#interactive">Interaktif</a>
+            <a href="#ending">Ending</a>
+        </aside>
+
+        <form id="settingsForm" class="settings-form">
+            <section class="panel auth-panel">
+                <h2>Akses Admin</h2>
+                <label>
+                    Password dashboard
+                    <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Isi sama dengan ADMIN_PASSWORD di Cloudflare">
+                </label>
+                <p>Password ini tidak disimpan ke file. Browser hanya menyimpannya sementara untuk mengirim perubahan ke API.</p>
+            </section>
+
+            <section id="countdown" class="panel">
+                <h2>Countdown</h2>
+                <div class="field-grid">
+                    <label>
+                        Tanggal dibuka
+                        <input id="unlockDate" type="date">
+                    </label>
+                    <label>
+                        Label countdown
+                        <input id="countdownKicker" type="text">
+                    </label>
+                </div>
+                <label>
+                    Judul countdown
+                    <input id="countdownTitle" type="text">
+                </label>
+                <label>
+                    Pesan saat terkunci
+                    <input id="lockedMessage" type="text">
+                </label>
+                <label>
+                    Pesan saat sudah terbuka
+                    <input id="unlockedMessage" type="text">
+                </label>
+            </section>
+
+            <section id="hero" class="panel">
+                <h2>Amplop</h2>
+                <div class="field-grid">
+                    <label>
+                        Judul surat kecil
+                        <input id="heroTitle" type="text">
+                    </label>
+                    <label>
+                        Teks instruksi terkunci
+                        <input id="lockedInstruction" type="text">
+                    </label>
+                </div>
+                <label>
+                    Isi surat kecil
+                    <textarea id="heroMessage" rows="3"></textarea>
+                </label>
+                <label>
+                    Teks instruksi saat terbuka
+                    <input id="unlockedInstruction" type="text">
+                </label>
+            </section>
+
+            <section id="content" class="panel">
+                <h2>Konten Utama</h2>
+                <label>
+                    Judul alasan sayang
+                    <input id="loveTitle" type="text">
+                </label>
+                <label>
+                    Alasan sayang, satu baris satu kartu
+                    <textarea id="reasons" rows="5"></textarea>
+                </label>
+                <label>
+                    Hal-hal kecil, format JSON
+                    <textarea id="littleThings" rows="8" spellcheck="false"></textarea>
+                </label>
+                <label>
+                    Polaroid, format JSON
+                    <textarea id="polaroids" rows="9" spellcheck="false"></textarea>
+                </label>
+                <label>
+                    Timeline detail, format JSON
+                    <textarea id="detailedTimeline" rows="9" spellcheck="false"></textarea>
+                </label>
+            </section>
+
+            <section id="interactive" class="panel">
+                <h2>Bagian Interaktif</h2>
+                <label>
+                    Wish Jar, satu baris satu doa
+                    <textarea id="wishes" rows="6"></textarea>
+                </label>
+                <label>
+                    Playlist, format JSON
+                    <textarea id="playlist" rows="8" spellcheck="false"></textarea>
+                </label>
+                <label>
+                    Memory Map, format JSON
+                    <textarea id="memoryMap" rows="8" spellcheck="false"></textarea>
+                </label>
+                <label>
+                    Mini Quiz, format JSON
+                    <textarea id="quiz" rows="10" spellcheck="false"></textarea>
+                </label>
+                <label>
+                    Carousel foto, format JSON
+                    <textarea id="carousel" rows="8" spellcheck="false"></textarea>
+                </label>
+            </section>
+
+            <section id="ending" class="panel">
+                <h2>Surat dan Ending</h2>
+                <label>
+                    Judul surat lengkap
+                    <input id="letterTitle" type="text">
+                </label>
+                <label>
+                    Isi surat lengkap, pisahkan paragraf dengan baris kosong
+                    <textarea id="letterParagraphs" rows="8"></textarea>
+                </label>
+                <label>
+                    Judul kejutan akhir
+                    <input id="surpriseTitle" type="text">
+                </label>
+                <label>
+                    Teks kejutan akhir
+                    <textarea id="surpriseText" rows="3"></textarea>
+                </label>
+                <label>
+                    Teks tebal kejutan akhir
+                    <textarea id="surpriseStrong" rows="2"></textarea>
+                </label>
+                <div class="field-grid">
+                    <label>
+                        Judul pesan
+                        <input id="curhatTitle" type="text">
+                    </label>
+                    <label>
+                        Prompt pesan
+                        <input id="curhatPrompt" type="text">
+                    </label>
+                </div>
+            </section>
+
+            <div class="bottom-actions">
+                <p id="statusText">Belum ada perubahan disimpan.</p>
+                <button type="button" class="primary-button" onclick="saveSettings()">Simpan Pengaturan</button>
+            </div>
+        </form>
+    </main>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

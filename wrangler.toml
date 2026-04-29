@@ -1,0 +1,8 @@
+name = "web-ultah-caya"
+pages_build_output_dir = "."
+compatibility_date = "2026-04-29"
+
+# Untuk production di Cloudflare Pages:
+# Settings > Functions > KV namespace bindings
+# Binding name: SETTINGS_KV
+# Variable secret: ADMIN_PASSWORD

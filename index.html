@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Blue Sky Story &#128153;</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="locked content-locked">
+
+    <div class="sky-bg">
+        <div class="cloud c1"></div>
+        <div class="cloud c2"></div>
+        <div class="cloud c3"></div>
+    </div>
+
+    <audio id="birthdayMusic" loop preload="auto">
+        <source src="musik.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="musicToggle" class="music-toggle" type="button" aria-label="Play atau pause musik" onclick="toggleMusic()">&#9834;</button>
+    <div id="hearts-container"></div>
+
+    <header id="envelope-screen" class="hero">
+        <div class="gate-countdown" aria-live="polite">
+            <p class="section-kicker">Menuju 06 Mei</p>
+            <h2>Countdown Ulang Tahunmu &#127874;</h2>
+            <div class="countdown-grid">
+                <div class="countdown-card">
+                    <strong id="days">00</strong>
+                    <span>Hari</span>
+                </div>
+                <div class="countdown-card">
+                    <strong id="hours">00</strong>
+                    <span>Jam</span>
+                </div>
+                <div class="countdown-card">
+                    <strong id="minutes">00</strong>
+                    <span>Menit</span>
+                </div>
+                <div class="countdown-card">
+                    <strong id="seconds">00</strong>
+                    <span>Detik</span>
+                </div>
+            </div>
+            <p id="countdownMessage" class="countdown-message"></p>
+        </div>
+
+        <div class="envelope-wrapper" onclick="bukaSurat()">
+            <div class="envelope">
+                <div class="flap"></div>
+                <div class="pocket"></div>
+                <div class="letter">
+                    <h1>HBD Sayang! &#9729;&#65039;</h1>
+                    <p>Sejauh langit membentang, sebanyak itu doaku buat kamu. I love you!</p>
+                </div>
+            </div>
+            <p class="click-instruction">Tunggu sampai 06 Mei ya...</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="love-reasons" data-aos="fade-up">
+            <h2>Kenapa Aku Sayang Kamu &#128153;</h2>
+            <div class="reason-grid">
+                <div class="reason-card">Karena senyummu bikin tenang</div>
+                <div class="reason-card">Karena kamu selalu ngerti aku</div>
+                <div class="reason-card">Karena hadirmu bikin hidup lebih indah</div>
+                <div class="reason-card">Karena kamu rumah terbaikku</div>
+            </div>
+            <button class="soft-button" type="button" onclick="goToSection('.timeline-section')">Lihat cerita kita</button>
+        </section>
+
+        <section class="timeline-section">
+            <h2 data-aos="fade-up">Cerita Kita &#10024;</h2>
+            <div class="clothesline-container">
+                <div class="clothesline"></div>
+
+                <div class="polaroid-wrapper">
+                    <div class="polaroid-item" data-aos="fade-down" data-aos-delay="100">
+                        <button class="polaroid swinging" type="button" onclick="openLightbox('awal_kenal.jpg', 'Awal Kenal', 'Maret 2023 - Waktu pertama kali kita ngobrol. Langit hari itu rasanya cerah banget, persis perasaan aku.')">
+                            <div class="pin"></div>
+                            <img src="awal_kenal.jpg" alt="Awal Kenal" onerror="showPhotoFallback(this)">
+                            <div class="caption">
+                                <h3>Maret 2023</h3>
+                                <p>Waktu pertama kali kita ngobrol. Langit hari itu rasanya cerah banget, persis perasaan aku.</p>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="polaroid-item" data-aos="fade-down" data-aos-delay="300">
+                        <button class="polaroid swinging-reverse" type="button" onclick="openLightbox('jadian.jpg', 'Jadian', 'Agustus 2023 - Hari paling bersejarah! Akhirnya kamu nerima aku jadi bagian dari hidupmu.')">
+                            <div class="pin"></div>
+                            <img src="jadian.jpg" alt="Jadian" onerror="showPhotoFallback(this)">
+                            <div class="caption">
+                                <h3>Agustus 2023</h3>
+                                <p>Hari paling bersejarah! Akhirnya kamu nerima aku jadi bagian dari hidupmu.</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button class="soft-button" type="button" onclick="goToSection('.detailed-timeline')">Lanjut ke jejak langkah</button>
+        </section>
+
+        <section class="detailed-timeline">
+            <h2 data-aos="fade-up">Jejak Langkah Kita &#128099;</h2>
+            <div class="timeline-container">
+                <div class="timeline-block" data-aos="fade-right">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>First Date &#127916;</h3>
+                        <p>Nonton bioskop bareng pertama kali. Masih malu-malu banget, deg-degan parah rasanya pengen waktu berhenti aja.</p>
+                        <span class="timeline-date">September 2023</span>
+                    </div>
+                </div>
+
+                <div class="timeline-block" data-aos="fade-left">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>Kehujanan Bareng &#127783;&#65039;</h3>
+                        <p>Lagi asik motoran eh hujan deres. Neduh di pinggir jalan sambil minum kopi anget, momen sederhana tapi berbekas banget.</p>
+                        <span class="timeline-date">November 2023</span>
+                    </div>
+                </div>
+
+                <div class="timeline-block" data-aos="fade-right">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>Tahun Baru Pertama &#127878;</h3>
+                        <p>Lewatin pergantian tahun berdua. Liat kembang api sambil janji bakal terus bareng-bareng di tahun-tahun berikutnya.</p>
+                        <span class="timeline-date">Desember 2023</span>
+                    </div>
+                </div>
+            </div>
+            <button class="soft-button" type="button" onclick="goToSection('.little-things')">Lihat hal kecil tentangmu</button>
+        </section>
+
+        <section class="little-things" data-aos="fade-up">
+            <p class="section-kicker">Yang selalu aku ingat</p>
+            <h2>Hal-Hal Kecil Tentang Kamu &#127799;</h2>
+            <div class="memory-grid">
+                <article class="memory-card">
+                    <span>Lagu favorit</span>
+                    <strong>Tulis lagu favoritmu di sini</strong>
+                </article>
+                <article class="memory-card">
+                    <span>Makanan favorit</span>
+                    <strong>Tulis makanan favoritmu di sini</strong>
+                </article>
+                <article class="memory-card">
+                    <span>Kebiasaan lucu</span>
+                    <strong>Tulis kebiasaan kecil yang paling kamu inget</strong>
+                </article>
+                <article class="memory-card">
+                    <span>Hal yang aku kagumi</span>
+                    <strong>Cara kamu tetap kuat dan baik hati</strong>
+                </article>
+            </div>
+            <button class="soft-button" type="button" onclick="openLetter()">Baca surat lengkap</button>
+        </section>
+
+        <section class="wish-jar-section" data-aos="fade-up">
+            <p class="section-kicker">Ambil satu doa</p>
+            <h2>Wish Jar Untuk Kamu &#127873;</h2>
+            <div class="wish-jar">
+                <button class="jar-button" type="button" onclick="drawWish()" aria-label="Ambil doa dari wish jar">
+                    <span class="jar-lid"></span>
+                    <span class="jar-glass">
+                        <span class="jar-note note-one"></span>
+                        <span class="jar-note note-two"></span>
+                        <span class="jar-note note-three"></span>
+                    </span>
+                </button>
+                <p id="wishText" class="wish-text">Klik botolnya, nanti keluar satu doa kecil buat kamu.</p>
+            </div>
+        </section>
+
+        <section class="playlist-section" data-aos="fade-up">
+            <p class="section-kicker">Soundtrack kecil</p>
+            <h2>Playlist Cerita Kita &#127925;</h2>
+            <div class="playlist-list">
+                <article class="song-card">
+                    <span>01</span>
+                    <div>
+                        <h3>Lagu waktu kangen</h3>
+                        <p>Ganti judul ini dengan lagu yang paling sering ngingetin kamu sama dia.</p>
+                    </div>
+                    <a href="https://open.spotify.com" target="_blank" rel="noreferrer">Buka</a>
+                </article>
+                <article class="song-card">
+                    <span>02</span>
+                    <div>
+                        <h3>Lagu perjalanan</h3>
+                        <p>Cocok buat lagu yang pernah kalian dengar bareng di jalan.</p>
+                    </div>
+                    <a href="https://www.youtube.com" target="_blank" rel="noreferrer">Buka</a>
+                </article>
+                <article class="song-card">
+                    <span>03</span>
+                    <div>
+                        <h3>Lagu ulang tahun</h3>
+                        <p>Simpan lagu paling manis buat penutup hari spesialnya.</p>
+                    </div>
+                    <a href="https://open.spotify.com" target="_blank" rel="noreferrer">Buka</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="love-meter-section" data-aos="fade-up">
+            <p class="section-kicker">Tidak bisa dihitung sistem</p>
+            <h2>Love Meter &#128153;</h2>
+            <div class="meter-card">
+                <div class="meter-track">
+                    <div id="loveMeterFill" class="meter-fill"></div>
+                </div>
+                <p id="loveMeterResult">Klik tombolnya buat ukur sayang.</p>
+                <button class="soft-button" type="button" onclick="runLoveMeter()">Ukur sayang</button>
+            </div>
+        </section>
+
+        <section class="memory-map-section" data-aos="fade-up">
+            <p class="section-kicker">Tempat-tempat kecil</p>
+            <h2>Memory Map &#128205;</h2>
+            <div class="map-board">
+                <article class="map-pin">
+                    <span>01</span>
+                    <h3>Tempat pertama ketemu</h3>
+                    <p>Tulis tempatnya di sini, biar jadi penanda awal cerita.</p>
+                </article>
+                <article class="map-pin">
+                    <span>02</span>
+                    <h3>Tempat first date</h3>
+                    <p>Tempat yang bikin deg-degan tapi sekarang jadi kenangan lucu.</p>
+                </article>
+                <article class="map-pin">
+                    <span>03</span>
+                    <h3>Tempat makan favorit</h3>
+                    <p>Tempat sederhana yang rasanya jadi spesial karena bareng kamu.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="quiz-section" data-aos="fade-up">
+            <p class="section-kicker">Mini quiz</p>
+            <h2>Seberapa Ingat Cerita Kita? &#128173;</h2>
+            <div class="quiz-card">
+                <h3 id="quizQuestion">Pertanyaan akan muncul di sini</h3>
+                <div id="quizOptions" class="quiz-options"></div>
+                <p id="quizResult" class="quiz-result"></p>
+            </div>
+        </section>
+
+        <section class="carousel-section" data-aos="fade-up">
+            <p class="section-kicker">Album geser</p>
+            <h2>Foto-Foto Favorit &#128247;</h2>
+            <div class="photo-carousel">
+                <button class="carousel-button" type="button" onclick="moveCarousel(-1)" aria-label="Foto sebelumnya">&#8249;</button>
+                <div class="carousel-frame">
+                    <img id="carouselImage" src="awal_kenal.jpg" alt="Awal Kenal" onerror="showCarouselFallback(this)">
+                    <div class="carousel-caption">
+                        <h3 id="carouselTitle">Awal Kenal</h3>
+                        <p id="carouselCaption">Momen pertama yang jadi awal semua cerita.</p>
+                    </div>
+                </div>
+                <button class="carousel-button" type="button" onclick="moveCarousel(1)" aria-label="Foto berikutnya">&#8250;</button>
+            </div>
+        </section>
+
+        <section class="surprise-section" data-aos="fade-up">
+            <p class="section-kicker">Kejutan terakhir</p>
+            <h2>One Last Surprise &#10024;</h2>
+            <p>Kalau sudah sampai sini, berarti kamu sudah buka semua bagian kecil yang aku siapin.</p>
+            <button class="soft-button" type="button" onclick="openSurprise()">Buka kejutan terakhir</button>
+        </section>
+
+        <section class="curhat-section" data-aos="fade-up">
+            <h2>Pesan Untukmu &#128140;</h2>
+            <p>Kalo ada yang mau diungkapin, tulis di bawah ya sayang...</p>
+            <div class="curhat-box">
+                <textarea id="pesanCurhat" rows="5" placeholder="Tulis sesuatu yang romantis..."></textarea>
+                <button type="button" onclick="kirimPesan()">Kirim Pesan</button>
+                <p id="lastMessage" class="last-message"></p>
+            </div>
+        </section>
+    </main>
+
+    <div id="lightbox" class="modal" role="dialog" aria-modal="true" aria-label="Galeri foto" onclick="closeModalOnBackdrop(event, 'lightbox')">
+        <div class="modal-content photo-modal">
+            <button class="modal-close" type="button" onclick="closeLightbox()" aria-label="Tutup galeri">&times;</button>
+            <img id="lightboxImage" src="" alt="">
+            <h3 id="lightboxTitle"></h3>
+            <p id="lightboxCaption"></p>
+        </div>
+    </div>
+
+    <div id="letterModal" class="modal" role="dialog" aria-modal="true" aria-label="Surat lengkap" onclick="closeModalOnBackdrop(event, 'letterModal')">
+        <div class="modal-content long-letter">
+            <button class="modal-close" type="button" onclick="closeLetter()" aria-label="Tutup surat">&times;</button>
+            <h2>Surat Untukmu &#128153;</h2>
+            <p>Selamat ulang tahun, sayang. Semoga umur barumu selalu dipenuhi hal-hal baik, langkah yang dimudahkan, hati yang dikuatkan, dan mimpi-mimpi yang pelan-pelan jadi nyata.</p>
+            <p>Terima kasih sudah hadir dan jadi bagian paling hangat dalam hari-hariku. Aku sayang kamu, bukan cuma di hari spesial ini, tapi di hari biasa, hari capek, hari lucu, dan hari-hari kecil yang sering lewat diam-diam.</p>
+            <p>Semoga kamu selalu ingat: kamu berharga, kamu dicintai, dan aku bangga punya kamu.</p>
+        </div>
+    </div>
+
+    <div id="surpriseModal" class="modal" role="dialog" aria-modal="true" aria-label="Kejutan terakhir" onclick="closeModalOnBackdrop(event, 'surpriseModal')">
+        <div class="modal-content surprise-modal">
+            <button class="modal-close" type="button" onclick="closeSurprise()" aria-label="Tutup kejutan">&times;</button>
+            <h2>Happy Birthday, Sayang &#127874;</h2>
+            <p>Semoga hari ini jadi salah satu hari yang kamu inget dengan senyum. Aku sayang kamu lebih dari yang bisa ditulis di web ini.</p>
+            <strong>Hadiah utamanya: aku akan terus milih kamu, hari ini dan seterusnya. &#128153;</strong>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
