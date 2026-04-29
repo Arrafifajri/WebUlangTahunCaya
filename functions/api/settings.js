@@ -74,6 +74,8 @@ const defaultSettings = {
 
 const SETTINGS_KEY = "birthday-settings";
 const MAX_SETTINGS_JSON_BYTES = 1_500_000;
+const CREATE_TABLE_SQL =
+    "CREATE TABLE IF NOT EXISTS site_settings (id TEXT PRIMARY KEY, settings_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)";
 
 function json(data, init = {}) {
     return new Response(JSON.stringify(data), {
@@ -96,25 +98,19 @@ async function readSettings(env) {
         return defaultSettings;
     }
 
-    await env.SETTINGS_DB.exec(`
-        CREATE TABLE IF NOT EXISTS site_settings (
-            id TEXT PRIMARY KEY,
-            value TEXT NOT NULL,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
+    await env.SETTINGS_DB.prepare(CREATE_TABLE_SQL).run();
 
     const row = await env.SETTINGS_DB
-        .prepare("SELECT value FROM site_settings WHERE id = ?1")
+        .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
         .bind(SETTINGS_KEY)
         .first();
 
-    if (!row || !row.value) {
+    if (!row || !row.settings_json) {
         return defaultSettings;
     }
 
     try {
-        return { ...defaultSettings, ...JSON.parse(row.value) };
+        return { ...defaultSettings, ...JSON.parse(row.settings_json) };
     } catch (error) {
         return defaultSettings;
     }
@@ -166,20 +162,14 @@ export async function onRequestPost({ request, env }) {
             );
         }
 
-        await env.SETTINGS_DB.exec(`
-            CREATE TABLE IF NOT EXISTS site_settings (
-                id TEXT PRIMARY KEY,
-                value TEXT NOT NULL,
-                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+        await env.SETTINGS_DB.prepare(CREATE_TABLE_SQL).run();
 
         await env.SETTINGS_DB
             .prepare(`
-                INSERT INTO site_settings (id, value, updated_at)
+                INSERT INTO site_settings (id, settings_json, updated_at)
                 VALUES (?1, ?2, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET
-                    value = excluded.value,
+                    settings_json = excluded.settings_json,
                     updated_at = CURRENT_TIMESTAMP
             `)
             .bind(SETTINGS_KEY, settingsJson)
