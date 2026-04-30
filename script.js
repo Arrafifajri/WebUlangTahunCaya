@@ -211,7 +211,7 @@ function updateCountdown() {
         document.getElementById("minutes").textContent = "00";
         document.getElementById("seconds").textContent = "00";
         message.textContent = settings.unlockedMessage;
-        unlockEnvelope();
+        enableEnvelope();
         return;
     }
 
@@ -235,11 +235,15 @@ function lockEnvelope() {
     if (clickInstruction) clickInstruction.textContent = settings.lockedInstruction;
 }
 
-function unlockEnvelope() {
-    document.body.classList.remove("content-locked");
+function enableEnvelope() {
     document.body.classList.remove("locked");
     if (envelope) envelope.classList.remove("is-waiting");
     if (clickInstruction) clickInstruction.textContent = settings.unlockedInstruction;
+}
+
+function unlockContentAfterEnvelope() {
+    document.body.classList.remove("content-locked");
+    document.body.classList.remove("locked");
 }
 
 function setText(selector, text) {
@@ -594,7 +598,7 @@ function bukaSurat() {
 
         setTimeout(() => {
             clearInterval(interval);
-            document.body.classList.remove("locked");
+            unlockContentAfterEnvelope();
             goToSection(".love-reasons");
         }, 2500);
     }
@@ -818,6 +822,7 @@ document.addEventListener("keydown", (event) => {
 
 async function initPage() {
     cleanupLegacySettingsCache();
+    await syncSettingsVersion();
     const hadCachedSettings = loadCachedRemoteSettings();
     if (hadCachedSettings) {
         applySettings();
@@ -830,7 +835,6 @@ async function initPage() {
         countdownTimer = setInterval(updateCountdown, 1000);
     }
 
-    await syncSettingsVersion();
     await loadRemoteSettings();
     if (!settingsReady) return;
     applySettings();
