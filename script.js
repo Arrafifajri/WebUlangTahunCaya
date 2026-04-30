@@ -99,6 +99,10 @@ function mergeSettings(base, saved) {
     return { ...base, ...(saved || {}) };
 }
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function loadSettings() {
     try {
         return mergeSettings(defaultSettings, JSON.parse(localStorage.getItem(SETTINGS_KEY)));
@@ -110,15 +114,25 @@ function loadSettings() {
 let settings = loadSettings();
 
 async function loadRemoteSettings() {
-    try {
-        const response = await fetch("/api/settings", { cache: "no-store" });
-        if (!response.ok) return;
+    // Retry singkat untuk perangkat yang koneksi mobile-nya tidak stabil.
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            const response = await fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
 
-        const remoteSettings = await response.json();
-        settings = mergeSettings(defaultSettings, remoteSettings);
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (error) {
-        settings = loadSettings();
+            const remoteSettings = await response.json();
+            settings = mergeSettings(defaultSettings, remoteSettings);
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            return;
+        } catch (error) {
+            if (attempt === 3) {
+                settings = loadSettings();
+                return;
+            }
+            await sleep(300 * attempt);
+        }
     }
 }
 
@@ -145,8 +159,14 @@ function padNumber(value) {
 }
 
 function getUnlockDate() {
-    const [year, month, day] = settings.unlockDate.split("-").map(Number);
-    return new Date(year, month - 1, day, 0, 0, 0);
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(settings.unlockDate || "");
+    if (!match) {
+        return new Date(2026, 4, 6, 0, 0, 0);
+    }
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
 }
 
 function isBirthdayUnlocked() {
