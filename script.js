@@ -321,7 +321,7 @@ function renderMovingGallery() {
     tracks.forEach((track, trackIndex) => {
         const rowPhotos = [];
         const offset = trackIndex % photos.length;
-        for (let i = 0; i < Math.max(photos.length * 2, 8); i++) {
+        for (let i = 0; i < Math.max(photos.length * 4, 16); i++) {
             rowPhotos.push(photos[(i + offset) % photos.length]);
         }
 
@@ -340,6 +340,66 @@ function renderMovingGallery() {
             button.append(image);
             track.appendChild(button);
         });
+    });
+    enableGalleryDrag(gallery);
+}
+
+function enableGalleryDrag(gallery) {
+    gallery.querySelectorAll(".gallery-line").forEach((line) => {
+        if (line.dataset.dragReady === "true") return;
+        line.dataset.dragReady = "true";
+
+        let startX = 0;
+        let startY = 0;
+        let startScrollLeft = 0;
+        let isDragging = false;
+        let moved = false;
+
+        line.addEventListener("pointerdown", (event) => {
+            startX = event.clientX;
+            startY = event.clientY;
+            startScrollLeft = line.scrollLeft;
+            isDragging = true;
+            moved = false;
+            line.classList.add("is-dragging");
+        });
+
+        line.addEventListener("pointermove", (event) => {
+            if (!isDragging) return;
+            const deltaX = event.clientX - startX;
+            const deltaY = event.clientY - startY;
+
+            if (Math.abs(deltaY) > Math.abs(deltaX) + 8) {
+                line.classList.remove("is-dragging");
+                isDragging = false;
+                return;
+            }
+
+            if (Math.abs(deltaX) > 5) {
+                moved = true;
+                if (line.setPointerCapture) {
+                    line.setPointerCapture(event.pointerId);
+                }
+                line.scrollLeft = startScrollLeft - deltaX;
+            }
+        });
+
+        const stopDragging = () => {
+            line.classList.remove("is-dragging");
+            isDragging = false;
+            setTimeout(() => {
+                moved = false;
+            }, 0);
+        };
+
+        line.addEventListener("pointerup", stopDragging);
+        line.addEventListener("pointercancel", stopDragging);
+        line.addEventListener("click", (event) => {
+            if (moved) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }, true);
     });
 }
 

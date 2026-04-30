@@ -380,6 +380,8 @@ body.envelope-open .gate-countdown {
     overflow: hidden;
     text-align: center;
     background: linear-gradient(180deg, #ffffff, #eef8ff);
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
 }
 
 .moving-gallery-section h2 {
@@ -397,8 +399,14 @@ body.envelope-open .gate-countdown {
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    touch-action: pan-x;
+    touch-action: auto;
+    overscroll-behavior-inline: contain;
+    cursor: grab;
     scrollbar-width: none;
+}
+
+.gallery-line.is-dragging {
+    cursor: grabbing;
 }
 
 .gallery-line::-webkit-scrollbar {
@@ -426,6 +434,7 @@ body.envelope-open .gate-countdown {
 
 .gallery-line:hover .gallery-track,
 .gallery-line:active .gallery-track,
+.gallery-line.is-dragging .gallery-track,
 .gallery-line:focus-within .gallery-track {
     animation-play-state: paused;
 }
@@ -441,6 +450,8 @@ body.envelope-open .gate-countdown {
     background: #dff3ff;
     box-shadow: 0 18px 38px rgba(0,119,182,0.13);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .gallery-marquee-card img {
@@ -448,6 +459,7 @@ body.envelope-open .gate-countdown {
     height: 100%;
     display: block;
     object-fit: cover;
+    pointer-events: none;
     transition: transform 0.35s ease;
 }
 
