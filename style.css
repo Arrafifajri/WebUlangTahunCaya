@@ -11,6 +11,14 @@ body {
     overflow-x: hidden;
 }
 
+body.modal-open {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
 html,
 body {
     max-width: 100%;

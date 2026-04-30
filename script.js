@@ -41,6 +41,7 @@ function sleep(ms) {
 let settings = { ...defaultSettings };
 let settingsReady = false;
 let countdownTimer = null;
+let lockedScrollY = 0;
 
 function cleanupLegacySettingsCache() {
     try {
@@ -558,6 +559,20 @@ function goToSection(selector) {
     }
 }
 
+function lockPageScroll() {
+    if (document.body.classList.contains("modal-open")) return;
+    lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.classList.add("modal-open");
+}
+
+function unlockPageScroll() {
+    if (!document.body.classList.contains("modal-open")) return;
+    document.body.classList.remove("modal-open");
+    document.body.style.top = "";
+    window.scrollTo(0, lockedScrollY);
+}
+
 function bukaSurat() {
     if (!settingsReady) {
         showSettingsError("Data belum siap.");
@@ -718,25 +733,30 @@ function openLightbox(src, title, caption) {
 
     document.getElementById("lightboxTitle").textContent = title;
     document.getElementById("lightboxCaption").textContent = caption;
+    lockPageScroll();
     lightbox.classList.add("is-open");
 }
 
 function closeLightbox() {
     document.getElementById("lightbox").classList.remove("is-open");
+    unlockPageScroll();
 }
 
 function openLetter() {
     if (!isBirthdayUnlocked()) return;
+    lockPageScroll();
     document.getElementById("letterModal").classList.add("is-open");
 }
 
 function closeLetter() {
     document.getElementById("letterModal").classList.remove("is-open");
+    unlockPageScroll();
 }
 
 function openSurprise() {
     if (!isBirthdayUnlocked()) return;
 
+    lockPageScroll();
     document.getElementById("surpriseModal").classList.add("is-open");
     startMusic();
 
@@ -751,11 +771,14 @@ function openSurprise() {
 
 function closeSurprise() {
     document.getElementById("surpriseModal").classList.remove("is-open");
+    unlockPageScroll();
 }
 
 function closeModalOnBackdrop(event, id) {
+    if (id === "lightbox") return;
     if (event.target.id === id) {
         event.target.classList.remove("is-open");
+        unlockPageScroll();
     }
 }
 
