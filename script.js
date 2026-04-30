@@ -42,6 +42,8 @@ let settings = { ...defaultSettings };
 let settingsReady = false;
 let countdownTimer = null;
 let lockedScrollY = 0;
+let skyAnimationStarted = false;
+let skyRevealStarted = false;
 
 function cleanupLegacySettingsCache() {
     try {
@@ -49,6 +51,173 @@ function cleanupLegacySettingsCache() {
     } catch (error) {
         // Kalau storage browser sedang penuh/bermasalah, flow utama tetap lanjut ambil D1.
     }
+}
+
+function initSkyCanvas() {
+    if (skyAnimationStarted) return;
+    skyAnimationStarted = true;
+
+    const canvas = document.getElementById("skyCanvas");
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const state = {
+        width: 0,
+        height: 0,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        clouds: [],
+        sparkles: [],
+        flyer: { x: -120, y: 120, speed: 0.42, phase: 0 }
+    };
+
+    function resizeSky() {
+        state.width = window.innerWidth;
+        state.height = window.innerHeight;
+        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(state.width * state.dpr);
+        canvas.height = Math.floor(state.height * state.dpr);
+        canvas.style.width = `${state.width}px`;
+        canvas.style.height = `${state.height}px`;
+        context.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+        state.clouds = Array.from({ length: state.width < 600 ? 7 : 11 }, (_, index) => ({
+            x: Math.random() * state.width,
+            y: 40 + Math.random() * state.height * 0.62,
+            scale: 0.45 + Math.random() * 0.9,
+            speed: 0.08 + Math.random() * 0.18,
+            opacity: 0.2 + Math.random() * 0.24,
+            drift: Math.random() * Math.PI * 2,
+            index
+        }));
+
+        state.sparkles = Array.from({ length: state.width < 600 ? 24 : 42 }, () => ({
+            x: Math.random() * state.width,
+            y: Math.random() * state.height * 0.72,
+            radius: 0.8 + Math.random() * 1.8,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.012 + Math.random() * 0.018
+        }));
+    }
+
+    function drawCloud(cloud) {
+        context.save();
+        context.globalAlpha = cloud.opacity;
+        context.translate(cloud.x, cloud.y + Math.sin(cloud.drift) * 8);
+        context.scale(cloud.scale, cloud.scale);
+        context.fillStyle = "#ffffff";
+        context.beginPath();
+        context.ellipse(0, 20, 54, 22, 0, 0, Math.PI * 2);
+        context.ellipse(38, 15, 42, 20, 0, 0, Math.PI * 2);
+        context.ellipse(-34, 18, 36, 18, 0, 0, Math.PI * 2);
+        context.ellipse(10, 2, 34, 28, 0, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+
+    function drawSparkle(sparkle) {
+        const pulse = 0.45 + Math.sin(sparkle.phase) * 0.35;
+        context.save();
+        context.globalAlpha = Math.max(0.08, pulse);
+        context.fillStyle = "#ffffff";
+        context.shadowColor = "rgba(255,255,255,0.9)";
+        context.shadowBlur = 12;
+        context.beginPath();
+        context.arc(sparkle.x, sparkle.y, sparkle.radius, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+
+    function drawFlyer() {
+        const flyer = state.flyer;
+        const bob = Math.sin(flyer.phase) * 16;
+        context.save();
+        context.translate(flyer.x, flyer.y + bob);
+        context.rotate(Math.sin(flyer.phase * 0.6) * 0.12);
+
+        const gradient = context.createLinearGradient(-58, 0, 8, 0);
+        gradient.addColorStop(0, "rgba(255,255,255,0)");
+        gradient.addColorStop(1, "rgba(255,255,255,0.74)");
+        context.fillStyle = gradient;
+        context.fillRect(-62, -3, 58, 6);
+
+        context.fillStyle = "rgba(255,255,255,0.92)";
+        context.shadowColor = "rgba(2,62,138,0.18)";
+        context.shadowBlur = 18;
+        context.beginPath();
+        context.arc(18, 0, 20, 0, Math.PI * 2);
+        context.fill();
+
+        context.shadowBlur = 0;
+        context.fillStyle = "#0077b6";
+        context.font = "700 22px serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText("♡", 18, 1);
+        context.restore();
+    }
+
+    function renderSky() {
+        context.clearRect(0, 0, state.width, state.height);
+        context.fillStyle = "rgba(240,248,255,0.02)";
+        context.fillRect(0, 0, state.width, state.height);
+
+        state.sparkles.forEach((sparkle) => {
+            sparkle.phase += sparkle.speed;
+            drawSparkle(sparkle);
+        });
+
+        state.clouds.forEach((cloud) => {
+            cloud.x += reduceMotion ? 0 : cloud.speed;
+            cloud.drift += 0.006;
+            if (cloud.x > state.width + 140) {
+                cloud.x = -160;
+                cloud.y = 40 + Math.random() * state.height * 0.62;
+            }
+            drawCloud(cloud);
+        });
+
+        if (!reduceMotion) {
+            state.flyer.x += state.flyer.speed;
+            state.flyer.phase += 0.018;
+            if (state.flyer.x > state.width + 120) {
+                state.flyer.x = -120;
+                state.flyer.y = 90 + Math.random() * Math.min(240, state.height * 0.36);
+            }
+            drawFlyer();
+            requestAnimationFrame(renderSky);
+        } else {
+            drawFlyer();
+        }
+    }
+
+    resizeSky();
+    renderSky();
+    window.addEventListener("resize", resizeSky);
+}
+
+function initSkyReveal() {
+    if (skyRevealStarted) return;
+    skyRevealStarted = true;
+
+    const targets = document.querySelectorAll("main > section");
+    targets.forEach((target) => target.classList.add("sky-reveal"));
+
+    if (!("IntersectionObserver" in window)) {
+        targets.forEach((target) => target.classList.add("is-visible"));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" });
+
+    targets.forEach((target) => observer.observe(target));
 }
 
 function loadCachedRemoteSettings() {
@@ -821,6 +990,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function initPage() {
+    initSkyCanvas();
     cleanupLegacySettingsCache();
     await syncSettingsVersion();
     const hadCachedSettings = loadCachedRemoteSettings();
@@ -831,6 +1001,7 @@ async function initPage() {
         renderLastMessage();
         renderQuiz();
         renderCarousel();
+        initSkyReveal();
         if (countdownTimer) clearInterval(countdownTimer);
         countdownTimer = setInterval(updateCountdown, 1000);
     }
@@ -843,6 +1014,7 @@ async function initPage() {
     renderLastMessage();
     renderQuiz();
     renderCarousel();
+    initSkyReveal();
     if (countdownTimer) clearInterval(countdownTimer);
     countdownTimer = setInterval(updateCountdown, 1000);
 }
