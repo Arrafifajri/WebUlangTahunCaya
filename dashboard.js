@@ -63,6 +63,9 @@ const defaultSettings = {
     surpriseTitle: "Happy Birthday, Sayang 🎂",
     surpriseText: "Semoga hari ini jadi salah satu hari yang kamu inget dengan senyum. Aku sayang kamu lebih dari yang bisa ditulis di web ini.",
     surpriseStrong: "Hadiah utamanya: aku akan terus milih kamu, hari ini dan seterusnya. 💙",
+    videoTitle: "Video Untukmu",
+    videoText: "Simpan video kecil yang paling kamu suka di sini.",
+    videoSrc: "",
     curhatTitle: "Pesan Untukmu 💌",
     curhatPrompt: "Kalo ada yang mau diungkapin, tulis di bawah ya sayang..."
 };
@@ -204,6 +207,9 @@ function collectSettings() {
         surpriseTitle: $("surpriseTitle").value.trim(),
         surpriseText: $("surpriseText").value.trim(),
         surpriseStrong: $("surpriseStrong").value.trim(),
+        videoTitle: $("videoTitle").value.trim(),
+        videoText: $("videoText").value.trim(),
+        videoSrc: $("videoSrc").value.trim(),
         curhatTitle: $("curhatTitle").value.trim(),
         curhatPrompt: $("curhatPrompt").value.trim()
     };
@@ -324,6 +330,29 @@ async function uploadMovingGalleryImage(event, index) {
     $("statusText").style.color = "#075985";
 }
 
+async function uploadMovingGalleryImages(event) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    $("statusText").textContent = `Memproses ${files.length} foto galeri...`;
+    $("statusText").style.color = "#075985";
+
+    for (const file of files) {
+        const dataUrl = await compressImage(file, 1400, 0.8);
+        const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || `Foto ${currentSettings.movingGallery.length + 1}`;
+        currentSettings.movingGallery.push({
+            src: dataUrl,
+            title,
+            caption: ""
+        });
+    }
+
+    event.target.value = "";
+    renderMovingGalleryEditor();
+    $("statusText").textContent = `${files.length} foto galeri sudah masuk. Jangan lupa klik Simpan Pengaturan.`;
+    $("statusText").style.color = "#075985";
+}
+
 function renderGuiEditors() {
     currentSettings.littleThings ||= [];
     currentSettings.detailedTimeline ||= [];
@@ -436,12 +465,40 @@ function renderCarouselEditor() {
 function renderMovingGalleryEditor() {
     const target = $("movingGalleryEditor");
     target.innerHTML = "";
+    target.classList.add("gallery-strip-editor");
+
+    if (!currentSettings.movingGallery.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-gallery-state";
+        empty.textContent = "Belum ada foto galeri. Klik Upload banyak untuk menambahkan beberapa foto sekaligus.";
+        target.appendChild(empty);
+        return;
+    }
+
     currentSettings.movingGallery.forEach((item, index) => {
-        const card = cardShell(`Galeri ${index + 1}`, () => {
+        const card = document.createElement("article");
+        card.className = "gallery-thumb-card";
+
+        const imageLabel = imagePicker("Ganti foto", item.src, (event) => uploadMovingGalleryImage(event, index));
+        imageLabel.classList.add("gallery-thumb-picker");
+
+        const meta = document.createElement("div");
+        meta.className = "gallery-thumb-meta";
+        meta.append(
+            inputField("Judul", item.title, (value) => item.title = value),
+            inputField("Caption", item.caption, (value) => item.caption = value, true)
+        );
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "danger-button icon-danger";
+        remove.textContent = "Hapus";
+        remove.onclick = () => {
             currentSettings.movingGallery.splice(index, 1);
             renderMovingGalleryEditor();
-        });
-        card.append(imagePicker("Upload foto", item.src, (event) => uploadMovingGalleryImage(event, index)), inputField("Judul", item.title, (value) => item.title = value), inputField("Caption", item.caption, (value) => item.caption = value, true));
+        };
+
+        card.append(imageLabel, meta, remove);
         target.appendChild(card);
     });
 }

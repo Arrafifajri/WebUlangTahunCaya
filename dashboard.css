@@ -10,7 +10,10 @@ html {
 
 body {
     min-height: 100vh;
-    background: #edf7ff;
+    background:
+        radial-gradient(circle at 8% 0%, rgba(125,211,252,0.35), transparent 25rem),
+        radial-gradient(circle at 92% 12%, rgba(255,255,255,0.85), transparent 22rem),
+        linear-gradient(180deg, #eef8ff 0%, #f8fcff 42%, #edf7ff 100%);
     color: #17324d;
     font-family: Inter, sans-serif;
 }
@@ -83,10 +86,11 @@ body:not(.dashboard-locked) .login-screen {
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    padding: 18px 28px;
-    background: rgba(255,255,255,0.88);
+    padding: 14px 28px;
+    background: rgba(255,255,255,0.78);
     border-bottom: 1px solid #cfe8f8;
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 12px 30px rgba(0,119,182,0.08);
 }
 
 .dashboard-header p {
@@ -121,19 +125,27 @@ button {
     background: #0077b6;
     color: #ffffff;
     box-shadow: 0 10px 24px rgba(0,119,182,0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ghost-button {
     padding: 12px 16px;
     background: #e0f2fe;
     color: #075985;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.primary-button:hover,
+.ghost-button:hover,
+.bulk-upload-button:hover {
+    transform: translateY(-2px);
 }
 
 .dashboard-layout {
     display: grid;
-    grid-template-columns: 230px minmax(0, 1fr);
+    grid-template-columns: 210px minmax(0, 1fr);
     gap: 24px;
-    width: min(1180px, calc(100% - 32px));
+    width: min(1280px, calc(100% - 32px));
     margin: 24px auto;
 }
 
@@ -143,16 +155,17 @@ button {
     height: fit-content;
     display: grid;
     gap: 8px;
-    padding: 14px;
+    padding: 10px;
     border: 1px solid #cfe8f8;
-    border-radius: 18px;
-    background: #ffffff;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.82);
     box-shadow: 0 14px 35px rgba(0,119,182,0.08);
+    backdrop-filter: blur(16px);
 }
 
 .side-panel a {
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 11px 13px;
+    border-radius: 14px;
     color: #31516d;
     font-weight: 800;
     text-decoration: none;
@@ -169,11 +182,12 @@ button {
 }
 
 .panel {
-    padding: 24px;
+    padding: 22px;
     border: 1px solid #cfe8f8;
-    border-radius: 22px;
-    background: #ffffff;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.88);
     box-shadow: 0 16px 38px rgba(0,119,182,0.07);
+    backdrop-filter: blur(18px);
 }
 
 .panel h2 {
@@ -181,6 +195,16 @@ button {
     color: #0077b6;
     font-family: 'Playfair Display', serif;
     font-size: 1.8rem;
+}
+
+.panel h2::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0077b6, #87ceeb);
 }
 
 .auth-panel p,
@@ -216,7 +240,7 @@ textarea {
     width: 100%;
     border: 1px solid #b8ddf2;
     border-radius: 14px;
-    background: #f8fcff;
+    background: rgba(248,252,255,0.92);
     color: #17324d;
     font: inherit;
     font-weight: 500;
@@ -275,7 +299,9 @@ textarea:focus {
 }
 
 .editor-group {
-    margin-top: 18px;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(207,232,248,0.72);
 }
 
 .group-heading {
@@ -283,7 +309,15 @@ textarea:focus {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+}
+
+.gallery-heading {
+    align-items: flex-start;
+}
+
+.compact-note {
+    margin: 6px 0 0;
 }
 
 .group-heading h3 {
@@ -321,6 +355,108 @@ textarea:focus {
     padding: 8px 12px;
     background: #fee2e2;
     color: #b91c1c;
+}
+
+.bulk-upload-button {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    min-height: 44px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #0077b6, #38bdf8);
+    color: #ffffff;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(0,119,182,0.22);
+}
+
+.bulk-upload-button input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.gallery-strip-editor {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 2px 12px;
+    scroll-snap-type: x mandatory;
+}
+
+.gallery-thumb-card {
+    flex: 0 0 210px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #cfe8f8;
+    border-radius: 18px;
+    background: rgba(248,252,255,0.94);
+    box-shadow: 0 10px 24px rgba(0,119,182,0.08);
+    scroll-snap-align: start;
+}
+
+.gallery-thumb-picker {
+    min-height: auto;
+    padding: 8px;
+    margin: 0;
+    border-radius: 14px;
+}
+
+.gallery-thumb-picker input {
+    font-size: 0.75rem;
+}
+
+.gallery-thumb-picker img {
+    display: block;
+    aspect-ratio: 1 / 1;
+    margin-top: 8px;
+    border-radius: 12px;
+}
+
+.gallery-thumb-meta {
+    display: grid;
+    gap: 8px;
+}
+
+.gallery-thumb-meta label {
+    margin: 0;
+    font-size: 0.78rem;
+}
+
+.gallery-thumb-meta input {
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 11px;
+    font-size: 0.86rem;
+}
+
+.gallery-thumb-meta textarea {
+    min-height: 68px;
+    padding: 9px 10px;
+    border-radius: 11px;
+    font-size: 0.86rem;
+}
+
+.icon-danger {
+    width: 100%;
+    min-height: 38px;
+    border-radius: 12px;
+}
+
+.empty-gallery-state {
+    width: 100%;
+    padding: 20px;
+    border: 1px dashed #8ccff3;
+    border-radius: 18px;
+    background: rgba(248,252,255,0.86);
+    color: #64748b;
+    font-weight: 800;
+    line-height: 1.6;
 }
 
 .compact-upload {
@@ -373,7 +509,14 @@ textarea:focus {
 
     .side-panel {
         position: static;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        display: flex;
+        overflow-x: auto;
+        padding: 10px;
+    }
+
+    .side-panel a {
+        flex: 0 0 auto;
+        white-space: nowrap;
     }
 
     .field-grid {
@@ -383,5 +526,26 @@ textarea:focus {
     .primary-button,
     .ghost-button {
         flex: 1;
+    }
+
+    .gallery-heading {
+        display: grid;
+    }
+
+    .bulk-upload-button {
+        width: 100%;
+    }
+
+    .gallery-thumb-card {
+        flex-basis: 178px;
+    }
+
+    .panel {
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .bottom-actions {
+        bottom: 8px;
     }
 }

@@ -147,11 +147,16 @@
                     <div id="carouselEditor" class="card-editor"></div>
                 </div>
                 <div class="editor-group">
-                    <div class="group-heading">
-                        <h3>Galeri bergerak</h3>
-                        <button type="button" class="ghost-button" onclick="addMovingGalleryItem()">Tambah</button>
+                    <div class="group-heading gallery-heading">
+                        <div>
+                            <h3>Galeri bergerak</h3>
+                            <p class="panel-note compact-note">Upload banyak foto sekaligus. Foto akan tampil sebagai strip kecil dan otomatis masuk ke galeri bergerak.</p>
+                        </div>
+                        <label class="bulk-upload-button">
+                            Upload banyak
+                            <input id="movingGalleryBulkUpload" type="file" accept="image/*" multiple onchange="uploadMovingGalleryImages(event)">
+                        </label>
                     </div>
-                    <p class="panel-note">Foto di bagian ini dipakai khusus untuk galeri 3 baris yang bergerak kanan dan kiri.</p>
                     <div id="movingGalleryEditor" class="card-editor"></div>
                 </div>
             </section>
@@ -193,6 +198,23 @@
                     Teks tebal kejutan akhir
                     <textarea id="surpriseStrong" rows="2"></textarea>
                 </label>
+                <div class="editor-group">
+                    <div class="group-heading">
+                        <h3>Video penutup</h3>
+                    </div>
+                    <label>
+                        Judul video
+                        <input id="videoTitle" type="text">
+                    </label>
+                    <label>
+                        Pesan video
+                        <textarea id="videoText" rows="2"></textarea>
+                    </label>
+                    <label>
+                        Link video
+                        <input id="videoSrc" type="url" placeholder="YouTube / youtu.be / link mp4">
+                    </label>
+                </div>
                 <div class="field-grid">
                     <label>
                         Judul pesan

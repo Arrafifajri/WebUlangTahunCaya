@@ -27,6 +27,9 @@ const defaultSettings = {
     surpriseTitle: "",
     surpriseText: "",
     surpriseStrong: "",
+    videoTitle: "",
+    videoText: "",
+    videoSrc: "",
     curhatTitle: "",
     curhatPrompt: ""
 };
@@ -239,7 +242,7 @@ function initMotionEngine() {
         let state = motion.gallery.get(track);
         const distance = Math.max(0, track.scrollWidth / 2);
         const direction = track.classList.contains("gallery-track-left") ? -1 : 1;
-        const speed = track.classList.contains("gallery-track-slow") ? 0.26 : 0.38;
+        const speed = track.classList.contains("gallery-track-slow") ? 0.52 : 0.76;
 
         if (!state || Math.abs(state.distance - distance) > 2) {
             state = {
@@ -742,6 +745,60 @@ function renderLetterAndSurprise() {
     setText(".curhat-section > p", settings.curhatPrompt);
 }
 
+function getEmbeddableVideoUrl(url) {
+    const raw = String(url || "").trim();
+    if (!raw) return "";
+
+    try {
+        const parsed = new URL(raw);
+        if (parsed.hostname.includes("youtube.com")) {
+            const id = parsed.searchParams.get("v");
+            return id ? `https://www.youtube.com/embed/${id}` : raw;
+        }
+        if (parsed.hostname.includes("youtu.be")) {
+            const id = parsed.pathname.replace("/", "");
+            return id ? `https://www.youtube.com/embed/${id}` : raw;
+        }
+    } catch (error) {
+        return raw;
+    }
+
+    return raw;
+}
+
+function renderVideoSection() {
+    const frame = document.getElementById("videoFrame");
+    if (!frame) return;
+
+    setText("#videoTitle", settings.videoTitle || "Video Untukmu");
+    setText("#videoText", settings.videoText || "Tambahkan link video dari dashboard.");
+    frame.innerHTML = "";
+
+    const src = getEmbeddableVideoUrl(settings.videoSrc);
+    if (!src) {
+        frame.innerHTML = `<div class="video-placeholder">Video akan muncul di sini</div>`;
+        return;
+    }
+
+    if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(src)) {
+        const video = document.createElement("video");
+        video.src = src;
+        video.controls = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+        frame.appendChild(video);
+        return;
+    }
+
+    const iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.title = settings.videoTitle || "Video";
+    iframe.loading = "lazy";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    frame.appendChild(iframe);
+}
+
 function applySettings() {
     setText(".gate-countdown .section-kicker", settings.countdownKicker);
     setText(".gate-countdown h2", settings.countdownTitle);
@@ -765,6 +822,7 @@ function applySettings() {
     renderDetailedTimeline();
     renderLittleThings();
     renderLetterAndSurprise();
+    renderVideoSection();
     wishes = settings.wishes;
     quizQuestions = settings.quiz;
     carouselPhotos = settings.carousel;
