@@ -22,6 +22,7 @@ const defaultSettings = {
     quiz: [],
     carousel: [],
     movingGallery: [],
+    movingGallerySpeed: 1,
     letterTitle: "",
     letterParagraphs: [],
     surpriseTitle: "",
@@ -244,9 +245,10 @@ function initMotionEngine() {
         let state = motion.gallery.get(track);
         const distance = Math.max(0, track.scrollWidth / 2);
         const direction = track.classList.contains("gallery-track-left") ? -1 : 1;
-        const speed = track.classList.contains("gallery-track-slow") ? 0.52 : 0.76;
+        const speedMultiplier = Math.min(2.5, Math.max(0.35, Number(settings.movingGallerySpeed) || 1));
+        const speed = (track.classList.contains("gallery-track-slow") ? 0.52 : 0.76) * speedMultiplier;
 
-        if (!state || Math.abs(state.distance - distance) > 2) {
+        if (!state || Math.abs(state.distance - distance) > 2 || Math.abs(state.speed - speed) > 0.01) {
             state = {
                 x: direction > 0 ? -distance : 0,
                 distance,
@@ -527,6 +529,34 @@ function setText(selector, text) {
     const element = document.querySelector(selector);
     if (element) {
         element.textContent = text;
+    }
+}
+
+function fitEnvelopeLetter() {
+    const letter = document.querySelector(".letter");
+    const title = document.querySelector(".letter h1");
+    const message = document.querySelector(".letter p");
+    if (!letter || !title || !message) return;
+
+    title.style.fontSize = "";
+    message.style.fontSize = "";
+    message.style.webkitLineClamp = "";
+
+    const isMobile = window.innerWidth <= 768;
+    const minTitle = isMobile ? 14 : 17;
+    const minMessage = isMobile ? 10 : 12;
+    let titleSize = parseFloat(getComputedStyle(title).fontSize);
+    let messageSize = parseFloat(getComputedStyle(message).fontSize);
+
+    for (let step = 0; step < 14 && letter.scrollHeight > letter.clientHeight + 1; step++) {
+        titleSize = Math.max(minTitle, titleSize - 1);
+        messageSize = Math.max(minMessage, messageSize - 0.45);
+        title.style.fontSize = `${titleSize}px`;
+        message.style.fontSize = `${messageSize}px`;
+    }
+
+    if (letter.scrollHeight > letter.clientHeight + 1) {
+        message.style.webkitLineClamp = "3";
     }
 }
 
@@ -821,6 +851,7 @@ function applySettings() {
     setText(".gate-countdown h2", settings.countdownTitle);
     setText(".letter h1", settings.heroTitle);
     setText(".letter p", settings.heroMessage);
+    requestAnimationFrame(fitEnvelopeLetter);
     setText(".love-reasons h2", settings.loveTitle);
     if (music) {
         const selectedSrc = settings.musicSrc && settings.musicSrc.trim() ? settings.musicSrc : "";
@@ -1200,6 +1231,8 @@ document.addEventListener("keydown", (event) => {
         closeSurprise();
     }
 });
+
+window.addEventListener("resize", fitEnvelopeLetter);
 
 async function initPage() {
     initSkyCanvas();

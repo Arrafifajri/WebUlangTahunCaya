@@ -157,6 +157,11 @@
                             <input id="movingGalleryBulkUpload" type="file" accept="image/*" multiple onchange="uploadMovingGalleryImages(event)">
                         </label>
                     </div>
+                    <label class="range-control">
+                        <span>Kecepatan animasi galeri</span>
+                        <input id="movingGallerySpeed" type="range" min="0.5" max="2.5" step="0.1" oninput="updateGallerySpeedLabel()">
+                        <strong id="movingGallerySpeedLabel">Normal</strong>
+                    </label>
                     <div id="movingGalleryEditor" class="card-editor"></div>
                 </div>
             </section>

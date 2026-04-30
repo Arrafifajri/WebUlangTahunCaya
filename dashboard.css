@@ -323,6 +323,38 @@ textarea:focus {
     margin: 6px 0 0;
 }
 
+.range-control {
+    display: grid;
+    grid-template-columns: minmax(170px, 1fr) minmax(180px, 2fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 16px;
+    padding: 12px 14px;
+    border: 1px solid #cfe8f8;
+    border-radius: 16px;
+    background: rgba(248,252,255,0.94);
+}
+
+.range-control span {
+    color: #31516d;
+}
+
+.range-control input {
+    min-height: auto;
+    padding: 0;
+    accent-color: #0077b6;
+}
+
+.range-control strong {
+    min-width: 92px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 0.84rem;
+    text-align: center;
+}
+
 .group-heading h3 {
     color: #17324d;
     font-size: 1.05rem;
@@ -587,6 +619,10 @@ textarea:focus {
 
     .gallery-heading {
         display: grid;
+    }
+
+    .range-control {
+        grid-template-columns: 1fr;
     }
 
     .bulk-upload-button {

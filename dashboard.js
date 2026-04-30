@@ -54,6 +54,7 @@ const defaultSettings = {
         { src: "foto_favorit.jpg", title: "Foto Favorit", caption: "Ganti file ini dengan foto favorit kalian berdua." }
     ],
     movingGallery: [],
+    movingGallerySpeed: 1,
     letterTitle: "Surat Untukmu 💙",
     letterParagraphs: [
         "Selamat ulang tahun, sayang. Semoga umur barumu selalu dipenuhi hal-hal baik, langkah yang dimudahkan, hati yang dikuatkan, dan mimpi-mimpi yang pelan-pelan jadi nyata.",
@@ -183,11 +184,13 @@ async function fillForm() {
     }
 
     $("letterParagraphs").value = data.letterParagraphs.join("\n\n");
+    updateGallerySpeedLabel();
     renderGuiEditors();
 }
 
 function collectSettings() {
     const videoLink = $("videoSrc").value.trim();
+    const gallerySpeed = Math.min(2.5, Math.max(0.5, Number($("movingGallerySpeed").value) || 1));
 
     return {
         unlockDate: $("unlockDate").value || defaultSettings.unlockDate,
@@ -210,6 +213,7 @@ function collectSettings() {
         quiz: collectQuiz(),
         carousel: collectCarousel(),
         movingGallery: collectMovingGallery(),
+        movingGallerySpeed: gallerySpeed,
         letterTitle: $("letterTitle").value.trim(),
         letterParagraphs: parseParagraphs("letterParagraphs"),
         surpriseTitle: $("surpriseTitle").value.trim(),
@@ -572,6 +576,23 @@ function renderMovingGalleryEditor() {
         card.append(imageLabel, meta, remove);
         target.appendChild(card);
     });
+}
+
+function updateGallerySpeedLabel() {
+    const field = $("movingGallerySpeed");
+    const label = $("movingGallerySpeedLabel");
+    if (!field || !label) return;
+
+    const value = Math.min(2.5, Math.max(0.5, Number(field.value) || 1));
+    field.value = String(value);
+
+    if (value < 0.85) {
+        label.textContent = `Pelan ${value.toFixed(1)}x`;
+    } else if (value > 1.15) {
+        label.textContent = `Cepat ${value.toFixed(1)}x`;
+    } else {
+        label.textContent = "Normal 1.0x";
+    }
 }
 
 function renderQuizEditor() {
