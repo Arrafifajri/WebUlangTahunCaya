@@ -237,7 +237,8 @@ async function saveSettings() {
             let message = text;
 
             try {
-                message = JSON.parse(text).error || text;
+                const parsed = JSON.parse(text);
+                message = `${parsed.error || text}${parsed.detail ? ` ${parsed.detail}` : ""}`;
             } catch (error) {
                 message = text || `HTTP ${response.status}`;
             }
@@ -251,6 +252,25 @@ async function saveSettings() {
         status.textContent = `${error.message} Perubahan belum disimpan ke Cloudflare.`;
         status.style.color = "#b91c1c";
     }
+}
+
+async function uploadMediaToKv(dataUrl, filename, kind) {
+    const response = await fetch("/api/media", {
+        method: "POST",
+        headers: {
+            "content-type": "application/json",
+            "x-admin-password": getAdminPassword()
+        },
+        body: JSON.stringify({ dataUrl, filename, kind })
+    });
+
+    if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        const detail = result.detail ? ` ${result.detail}` : "";
+        throw new Error(`${result.error || `HTTP ${response.status}`}${detail}`);
+    }
+
+    return response.json();
 }
 
 function compressImage(file, maxSize = 1400, quality = 0.82) {
@@ -284,68 +304,107 @@ async function uploadPolaroidImage(event, index) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const dataUrl = await compressImage(file);
-    const polaroids = currentSettings.polaroids;
+    try {
+        $("statusText").textContent = `Mengupload ${file.name} ke Cloudflare KV...`;
+        $("statusText").style.color = "#075985";
 
-    polaroids[index] = {
-        ...(polaroids[index] || { title: `Foto ${index + 1}`, alt: `Foto ${index + 1}`, caption: "" }),
-        image: dataUrl
-    };
+        const dataUrl = await compressImage(file);
+        const media = await uploadMediaToKv(dataUrl, file.name, "polaroid");
+        const polaroids = currentSettings.polaroids;
 
-    renderPolaroidEditor();
-    $("statusText").textContent = "Gambar polaroid sudah masuk. Jangan lupa klik Simpan Pengaturan.";
-    $("statusText").style.color = "#075985";
+        polaroids[index] = {
+            ...(polaroids[index] || { title: `Foto ${index + 1}`, alt: `Foto ${index + 1}`, caption: "" }),
+            image: media.src
+        };
+
+        renderPolaroidEditor();
+        $("statusText").textContent = "Gambar polaroid sudah masuk. Jangan lupa klik Simpan Pengaturan.";
+        $("statusText").style.color = "#075985";
+    } catch (error) {
+        $("statusText").textContent = `${error.message} Gambar belum tersimpan.`;
+        $("statusText").style.color = "#b91c1c";
+    }
 }
 
 async function uploadCarouselImage(event, index) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const dataUrl = await compressImage(file);
-    const carousel = currentSettings.carousel;
+    try {
+        $("statusText").textContent = `Mengupload ${file.name} ke Cloudflare KV...`;
+        $("statusText").style.color = "#075985";
 
-    carousel[index] = {
-        ...(carousel[index] || { title: `Foto ${index + 1}`, caption: "" }),
-        src: dataUrl
-    };
+        const dataUrl = await compressImage(file);
+        const media = await uploadMediaToKv(dataUrl, file.name, "carousel");
+        const carousel = currentSettings.carousel;
 
-    renderCarouselEditor();
-    $("statusText").textContent = "Gambar carousel sudah masuk. Jangan lupa klik Simpan Pengaturan.";
-    $("statusText").style.color = "#075985";
+        carousel[index] = {
+            ...(carousel[index] || { title: `Foto ${index + 1}`, caption: "" }),
+            src: media.src
+        };
+
+        renderCarouselEditor();
+        $("statusText").textContent = "Gambar carousel sudah masuk. Jangan lupa klik Simpan Pengaturan.";
+        $("statusText").style.color = "#075985";
+    } catch (error) {
+        $("statusText").textContent = `${error.message} Gambar belum tersimpan.`;
+        $("statusText").style.color = "#b91c1c";
+    }
 }
 
 async function uploadMovingGalleryImage(event, index) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const dataUrl = await compressImage(file);
-    const gallery = currentSettings.movingGallery;
+    try {
+        $("statusText").textContent = `Mengupload ${file.name} ke Cloudflare KV...`;
+        $("statusText").style.color = "#075985";
 
-    gallery[index] = {
-        ...(gallery[index] || { title: `Foto ${index + 1}`, caption: "" }),
-        src: dataUrl
-    };
+        const dataUrl = await compressImage(file, 1200, 0.78);
+        const media = await uploadMediaToKv(dataUrl, file.name, "gallery");
+        const gallery = currentSettings.movingGallery;
 
-    renderMovingGalleryEditor();
-    $("statusText").textContent = "Gambar galeri bergerak sudah masuk. Jangan lupa klik Simpan Pengaturan.";
-    $("statusText").style.color = "#075985";
+        gallery[index] = {
+            ...(gallery[index] || { title: `Foto ${index + 1}`, caption: "" }),
+            src: media.src
+        };
+
+        renderMovingGalleryEditor();
+        $("statusText").textContent = "Gambar galeri bergerak sudah masuk. Jangan lupa klik Simpan Pengaturan.";
+        $("statusText").style.color = "#075985";
+    } catch (error) {
+        $("statusText").textContent = `${error.message} Gambar belum tersimpan.`;
+        $("statusText").style.color = "#b91c1c";
+    }
 }
 
 async function uploadMovingGalleryImages(event) {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
 
-    $("statusText").textContent = `Memproses ${files.length} foto galeri...`;
+    $("statusText").textContent = `Memproses ${files.length} foto galeri ke Cloudflare KV...`;
     $("statusText").style.color = "#075985";
 
-    for (const file of files) {
-        const dataUrl = await compressImage(file, 1400, 0.8);
-        const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || `Foto ${currentSettings.movingGallery.length + 1}`;
-        currentSettings.movingGallery.push({
-            src: dataUrl,
-            title,
-            caption: ""
-        });
+    let uploaded = 0;
+    try {
+        for (const file of files) {
+            $("statusText").textContent = `Upload ${uploaded + 1}/${files.length}: ${file.name}`;
+            const dataUrl = await compressImage(file, 1100, 0.74);
+            const media = await uploadMediaToKv(dataUrl, file.name, "gallery");
+            const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || `Foto ${currentSettings.movingGallery.length + 1}`;
+            currentSettings.movingGallery.push({
+                src: media.src,
+                title,
+                caption: ""
+            });
+            uploaded++;
+        }
+    } catch (error) {
+        event.target.value = "";
+        renderMovingGalleryEditor();
+        $("statusText").textContent = `${uploaded}/${files.length} foto berhasil. Upload berhenti: ${error.message}`;
+        $("statusText").style.color = "#b91c1c";
+        return;
     }
 
     event.target.value = "";
@@ -561,19 +620,27 @@ function uploadMusic(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.size > 4 * 1024 * 1024) {
-        $("statusText").textContent = "File musik terlalu besar. Pakai audio pendek di bawah 4 MB agar aman disimpan.";
+    if (file.size > 8 * 1024 * 1024) {
+        $("statusText").textContent = "File musik terlalu besar. Pakai audio pendek di bawah 8 MB agar aman disimpan.";
         $("statusText").style.color = "#b91c1c";
         return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
-        currentSettings.musicSrc = reader.result;
-        currentSettings.musicName = file.name;
-        $("musicFileName").textContent = file.name;
-        $("statusText").textContent = "Musik sudah masuk. Jangan lupa klik Simpan Pengaturan.";
-        $("statusText").style.color = "#075985";
+    reader.onload = async () => {
+        try {
+            $("statusText").textContent = `Mengupload ${file.name} ke Cloudflare KV...`;
+            $("statusText").style.color = "#075985";
+            const media = await uploadMediaToKv(reader.result, file.name, "music");
+            currentSettings.musicSrc = media.src;
+            currentSettings.musicName = file.name;
+            $("musicFileName").textContent = file.name;
+            $("statusText").textContent = "Musik sudah masuk ke KV. Jangan lupa klik Simpan Pengaturan.";
+            $("statusText").style.color = "#075985";
+        } catch (error) {
+            $("statusText").textContent = `${error.message} Musik belum tersimpan.`;
+            $("statusText").style.color = "#b91c1c";
+        }
     };
     reader.readAsDataURL(file);
 }

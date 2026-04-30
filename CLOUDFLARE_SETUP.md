@@ -5,6 +5,7 @@ Project ini sekarang memakai:
 - Static frontend: `index.html`, `dashboard.html`, CSS, JS
 - Cloudflare Pages Functions: `functions/api/settings.js`
 - Cloudflare D1: menyimpan isi dashboard
+- Cloudflare KV: menyimpan file media upload dari dashboard
 - Secret `ADMIN_PASSWORD`: melindungi tombol simpan dashboard
 
 ## Deploy
@@ -37,6 +38,20 @@ Database: birthday_settings_db
 ```
 
 Kalau tombol binding terkunci dan muncul pesan "Bindings for this project are being managed through wrangler.toml", hapus file `wrangler.toml` dari repo GitHub, lalu redeploy. Setelah itu binding bisa ditambahkan lewat UI Cloudflare.
+
+## KV Media
+
+Upload banyak foto jangan disimpan langsung ke D1 karena JSON settings bisa terlalu besar dan rusak. Project ini menyimpan foto/musik ke KV, lalu D1 hanya menyimpan URL media.
+
+1. Di Cloudflare, buat KV namespace, misalnya `birthday_settings`.
+2. Buka project Pages.
+3. Masuk ke Settings > Functions > KV namespace bindings.
+4. Tambahkan binding:
+
+```text
+Variable name: SETTINGS_KV
+KV namespace: birthday_settings
+```
 
 ## Password Dashboard
 
