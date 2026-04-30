@@ -353,7 +353,8 @@ main > section:nth-child(even)::after {
     margin: 0 auto;
     box-shadow: 0 15px 30px rgba(0,0,0,0.2);
     transition: transform 0.35s ease, box-shadow 0.35s ease;
-    animation: envelopeBreathe 3.8s ease-in-out infinite;
+    contain: layout paint;
+    will-change: transform;
 }
 
 .envelope-wrapper:not(.is-waiting):hover .envelope {
@@ -374,6 +375,7 @@ main > section:nth-child(even)::after {
     border-top: 100px solid transparent;
     border-radius: 0 0 10px 10px;
     z-index: 3;
+    pointer-events: none;
 }
 
 /* Tutup Amplop Atas (Flap) */
@@ -388,6 +390,7 @@ main > section:nth-child(even)::after {
     transform-origin: top; /* Titik putar di atas */
     transition: transform 0.6s ease-in-out, z-index 0.2s;
     z-index: 4;
+    pointer-events: none;
 }
 
 /* Kertas Surat di Dalam */
@@ -408,6 +411,8 @@ main > section:nth-child(even)::after {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    pointer-events: none;
+    will-change: transform;
 }
 
 .letter h1 {

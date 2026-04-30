@@ -45,6 +45,7 @@ let settings = { ...defaultSettings };
 let settingsReady = false;
 let countdownTimer = null;
 let lockedScrollY = 0;
+let isOpeningEnvelope = false;
 let skyAnimationStarted = false;
 let skyRevealStarted = false;
 let motionEngineStarted = false;
@@ -363,7 +364,9 @@ async function loadRemoteSettings() {
         try {
             const response = await fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" });
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                const result = await response.json().catch(() => null);
+                const detail = result?.detail ? ` ${result.detail}` : "";
+                throw new Error(`${result?.error || `HTTP ${response.status}`}${detail}`);
             }
 
             const remoteSettings = await response.json();
@@ -927,6 +930,8 @@ function unlockPageScroll() {
 }
 
 function bukaSurat() {
+    if (isOpeningEnvelope) return;
+
     if (!settingsReady) {
         showSettingsError("Data belum siap.");
         return;
@@ -939,14 +944,19 @@ function bukaSurat() {
     }
 
     if (!envelope.classList.contains("is-opened")) {
+        isOpeningEnvelope = true;
         envelope.classList.add("is-opened");
         document.body.classList.add("envelope-open");
         startMusic();
 
-        const interval = setInterval(createHeart, 160);
+        let interval = null;
+        requestAnimationFrame(() => {
+            createHeart();
+            interval = setInterval(createHeart, 220);
+        });
 
         setTimeout(() => {
-            clearInterval(interval);
+            if (interval) clearInterval(interval);
             unlockContentAfterEnvelope();
             goToSection(".love-reasons");
         }, 2500);

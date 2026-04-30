@@ -6,6 +6,11 @@ const CREATE_CHUNK_TABLE_SQL =
 const CREATE_LEGACY_TABLE_SQL =
     "CREATE TABLE IF NOT EXISTS site_settings (id TEXT PRIMARY KEY, settings_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)";
 
+async function ensureSettingsTables(env) {
+    await env.SETTINGS_DB.prepare(CREATE_CHUNK_TABLE_SQL).run();
+    await env.SETTINGS_DB.prepare(CREATE_LEGACY_TABLE_SQL).run();
+}
+
 function json(data, init = {}) {
     return new Response(JSON.stringify(data), {
         ...init,
@@ -27,29 +32,28 @@ async function readSettings(env) {
         return null;
     }
 
+    await ensureSettingsTables(env);
+
     let chunkRows;
-    try {
-        chunkRows = await env.SETTINGS_DB
-            .prepare("SELECT chunk_text FROM site_settings_chunks WHERE id = ?1 ORDER BY chunk_index ASC")
-            .bind(SETTINGS_KEY)
-            .all();
-    } catch (error) {
-        return null;
-    }
+    chunkRows = await env.SETTINGS_DB
+        .prepare("SELECT chunk_index, chunk_text FROM site_settings_chunks WHERE id = ?1 ORDER BY chunk_index ASC")
+        .bind(SETTINGS_KEY)
+        .all();
 
     let payload = "";
     if (chunkRows?.results?.length) {
+        const hasMissingChunk = chunkRows.results.some((row, index) => Number(row.chunk_index) !== index);
+        if (hasMissingChunk) {
+            throw new Error("Data settings chunk di D1 tidak lengkap. Simpan ulang dari dashboard.");
+        }
+
         payload = chunkRows.results.map((row) => row.chunk_text || "").join("");
     } else {
-        try {
-            const row = await env.SETTINGS_DB
-                .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
-                .bind(SETTINGS_KEY)
-                .first();
-            payload = row?.settings_json || "";
-        } catch (error) {
-            payload = "";
-        }
+        const row = await env.SETTINGS_DB
+            .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
+            .bind(SETTINGS_KEY)
+            .first();
+        payload = row?.settings_json || "";
     }
 
     try {
@@ -114,8 +118,7 @@ export async function onRequestPost({ request, env }) {
             );
         }
 
-        await env.SETTINGS_DB.prepare(CREATE_CHUNK_TABLE_SQL).run();
-        await env.SETTINGS_DB.prepare(CREATE_LEGACY_TABLE_SQL).run();
+        await ensureSettingsTables(env);
 
         await env.SETTINGS_DB
             .prepare("DELETE FROM site_settings_chunks WHERE id = ?1")
@@ -144,7 +147,7 @@ export async function onRequestPost({ request, env }) {
                     settings_json = excluded.settings_json,
                     updated_at = CURRENT_TIMESTAMP
             `)
-            .bind(SETTINGS_KEY, chunks[0] || "{}")
+            .bind(SETTINGS_KEY, settingsJson.length <= CHUNK_SIZE ? settingsJson : "{}")
             .run();
 
         return json({ ok: true, settings });
