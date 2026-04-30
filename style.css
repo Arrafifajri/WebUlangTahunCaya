@@ -1255,6 +1255,37 @@ textarea:focus {
     padding: 20px;
 }
 
+#lightbox.modal {
+    width: 100dvw;
+    max-width: 100dvw;
+    min-height: 100dvh;
+    padding: 0;
+    overflow: hidden;
+}
+
+#lightbox.modal.is-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#lightbox .photo-modal {
+    width: min(86dvw, 360px);
+    max-width: min(86dvw, 360px);
+    max-height: min(88dvh, 760px);
+    margin: 0 auto;
+    overflow: hidden auto;
+}
+
+#lightboxImage {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
 .long-letter {
     padding: 42px;
 }
@@ -1365,15 +1396,19 @@ textarea:focus {
     }
 
     .photo-modal {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: min(86vw, 340px);
-        max-width: min(86vw, 340px);
-        max-height: 86dvh;
         padding: 14px 14px 22px;
         margin: auto;
+    }
+
+    #lightbox .photo-modal {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        width: min(82dvw, 340px);
+        max-width: min(82dvw, 340px);
+        max-height: 86dvh;
+        margin: 0 auto;
     }
 
     .photo-modal img {
@@ -1405,6 +1440,11 @@ textarea:focus {
         width: 32px;
         height: 32px;
         font-size: 1.45rem;
+    }
+
+    #lightbox .modal-close {
+        top: 6px;
+        right: 6px;
     }
 
     /* 2. Timeline Polaroid Gantung */
