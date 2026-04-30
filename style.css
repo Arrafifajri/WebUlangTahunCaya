@@ -99,18 +99,159 @@ body.envelope-open .gate-countdown {
 
 .gate-countdown {
     width: min(100%, 760px);
-    padding: 28px;
+    padding: 118px 28px 30px;
     border: 1px solid rgba(255,255,255,0.75);
     border-radius: 24px;
-    background: rgba(255,255,255,0.58);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0.76)),
+        linear-gradient(145deg, #92d7f4 0%, #dff5ff 52%, #ffffff 100%);
     box-shadow: 0 18px 45px rgba(0,119,182,0.14);
     backdrop-filter: blur(14px);
     animation: panelFloat 5s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
 }
 
 .gate-countdown h2 {
+    position: relative;
+    z-index: 2;
     font-size: clamp(1.8rem, 5vw, 3rem);
     margin-bottom: 22px;
+    text-shadow: 0 8px 24px rgba(255,255,255,0.86);
+}
+
+.gate-countdown .section-kicker,
+.countdown-grid,
+.countdown-message {
+    position: relative;
+    z-index: 2;
+}
+
+.countdown-sky {
+    position: absolute;
+    inset: 0;
+    height: 142px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.countdown-sky::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 18% 24%, rgba(255,255,255,0.78), transparent 10%),
+        radial-gradient(circle at 78% 28%, rgba(255,255,255,0.58), transparent 12%),
+        linear-gradient(180deg, rgba(135,206,235,0.82), rgba(224,247,255,0));
+}
+
+.sky-cloud {
+    position: absolute;
+    width: 138px;
+    height: 44px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.86);
+    filter: drop-shadow(0 12px 20px rgba(0,119,182,0.12));
+    animation: countdownCloud 18s linear infinite;
+}
+
+.sky-cloud::before,
+.sky-cloud::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: inherit;
+}
+
+.sky-cloud::before {
+    width: 58px;
+    height: 58px;
+    left: 22px;
+    top: -28px;
+}
+
+.sky-cloud::after {
+    width: 74px;
+    height: 74px;
+    right: 18px;
+    top: -38px;
+}
+
+.cloud-a {
+    --cloud-scale: 1;
+    left: -160px;
+    top: 48px;
+    animation-duration: 22s;
+}
+
+.cloud-b {
+    --cloud-scale: 0.72;
+    left: 18%;
+    top: 26px;
+    opacity: 0.74;
+    animation-duration: 28s;
+    animation-delay: -10s;
+}
+
+.cloud-c {
+    --cloud-scale: 0.86;
+    left: 68%;
+    top: 70px;
+    opacity: 0.82;
+    animation-duration: 24s;
+    animation-delay: -16s;
+}
+
+.sky-star {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 16px rgba(255,255,255,0.9);
+    animation: twinkle 2.4s ease-in-out infinite;
+}
+
+.star-a { left: 18%; top: 26px; }
+.star-b { left: 54%; top: 18px; animation-delay: -0.8s; }
+.star-c { left: 82%; top: 42px; animation-delay: -1.4s; }
+
+.flying-love {
+    position: absolute;
+    left: -90px;
+    top: 58px;
+    width: 78px;
+    height: 38px;
+    animation: flyingAcross 7.5s cubic-bezier(.42,0,.2,1) infinite;
+    filter: drop-shadow(0 10px 16px rgba(2,62,138,0.2));
+}
+
+.fly-body {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    color: #0077b6;
+    font-size: 1.5rem;
+    font-weight: 800;
+    animation: flyerBob 1.1s ease-in-out infinite alternate;
+}
+
+.fly-trail {
+    position: absolute;
+    left: 0;
+    top: 17px;
+    width: 52px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.88), rgba(0,119,182,0.32));
+}
 }
 
 .envelope-wrapper.is-waiting {
@@ -235,6 +376,29 @@ body.envelope-open .gate-countdown {
     50% { filter: drop-shadow(0 10px 18px rgba(255,255,255,0.35)); }
 }
 
+@keyframes countdownCloud {
+    from { transform: translateX(0) scale(var(--cloud-scale, 1)); }
+    to { transform: translateX(940px) scale(var(--cloud-scale, 1)); }
+}
+
+@keyframes twinkle {
+    0%, 100% { transform: scale(0.65); opacity: 0.45; }
+    50% { transform: scale(1.25); opacity: 1; }
+}
+
+@keyframes flyingAcross {
+    0% { transform: translate(-20px, 8px) rotate(-8deg); opacity: 0; }
+    8% { opacity: 1; }
+    48% { transform: translate(420px, -22px) rotate(7deg); }
+    92% { opacity: 1; }
+    100% { transform: translate(900px, 10px) rotate(-5deg); opacity: 0; }
+}
+
+@keyframes flyerBob {
+    from { transform: translateY(-3px) rotate(-4deg); }
+    to { transform: translateY(4px) rotate(5deg); }
+}
+
 /* --- ANIMASI KETIKA AMPLOP DIKLIK --- */
 .envelope-wrapper.is-opened .flap {
     transform: rotateX(180deg); /* Tutup amplop terbuka ke atas */
@@ -306,10 +470,18 @@ body.envelope-open .gate-countdown {
 .countdown-card {
     min-height: 120px;
     padding: 24px 14px;
-    background: #ffffff;
-    border: 1px solid #d7efff;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(238,248,255,0.96));
+    border: 1px solid rgba(255,255,255,0.9);
     border-radius: 20px;
     box-shadow: 0 16px 34px rgba(0,119,182,0.1);
+    backdrop-filter: blur(8px);
+    transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.countdown-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 46px rgba(0,119,182,0.18);
 }
 
 .countdown-card strong {
@@ -1430,7 +1602,20 @@ textarea:focus {
     }
 
     .gate-countdown {
-        padding: 22px 14px;
+        padding: 96px 14px 22px;
+    }
+
+    .countdown-sky {
+        height: 118px;
+    }
+
+    .flying-love {
+        animation-duration: 6.8s;
+    }
+
+    .sky-cloud {
+        width: 108px;
+        height: 34px;
     }
 
     .envelope {
