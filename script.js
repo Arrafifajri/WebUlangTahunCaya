@@ -44,6 +44,7 @@ let countdownTimer = null;
 let lockedScrollY = 0;
 let skyAnimationStarted = false;
 let skyRevealStarted = false;
+let motionEngineStarted = false;
 
 function cleanupLegacySettingsCache() {
     try {
@@ -218,6 +219,106 @@ function initSkyReveal() {
     }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" });
 
     targets.forEach((target) => observer.observe(target));
+}
+
+function initMotionEngine() {
+    if (motionEngineStarted) return;
+    motionEngineStarted = true;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    document.body.classList.add("js-motion");
+
+    const motion = {
+        startedAt: performance.now(),
+        gallery: new WeakMap()
+    };
+
+    function getGalleryState(track) {
+        let state = motion.gallery.get(track);
+        const distance = Math.max(0, track.scrollWidth / 2);
+        const direction = track.classList.contains("gallery-track-left") ? -1 : 1;
+        const speed = track.classList.contains("gallery-track-slow") ? 0.26 : 0.38;
+
+        if (!state || Math.abs(state.distance - distance) > 2) {
+            state = {
+                x: direction > 0 ? -distance : 0,
+                distance,
+                direction,
+                speed
+            };
+            motion.gallery.set(track, state);
+        }
+
+        return state;
+    }
+
+    function animateGallery() {
+        document.querySelectorAll(".gallery-line").forEach((line) => {
+            const track = line.querySelector(".gallery-track");
+            if (!track) return;
+
+            const state = getGalleryState(track);
+            if (!state.distance) return;
+
+            if (!line.classList.contains("is-dragging") && !line.matches(":hover")) {
+                state.x += state.direction * state.speed;
+                if (state.direction > 0 && state.x >= 0) state.x = -state.distance;
+                if (state.direction < 0 && Math.abs(state.x) >= state.distance) state.x = 0;
+            }
+
+            track.style.transform = `translate3d(${state.x}px, 0, 0)`;
+        });
+    }
+
+    function animateHero(time) {
+        const elapsed = (time - motion.startedAt) / 1000;
+        const gate = document.querySelector(".gate-countdown");
+        const envelopeBox = document.querySelector(".envelope-wrapper");
+        const envelopeEl = document.querySelector(".envelope");
+        const cards = document.querySelectorAll(".countdown-card");
+
+        if (gate && !document.body.classList.contains("envelope-open")) {
+            gate.style.transform = `translate3d(0, ${Math.sin(elapsed * 1.2) * -6}px, 0)`;
+        }
+
+        if (envelopeEl && envelopeBox && !envelopeBox.classList.contains("is-opened")) {
+            if (envelopeBox.classList.contains("is-waiting")) {
+                envelopeEl.style.transform = "scale(0.96)";
+            } else {
+                const lift = Math.sin(elapsed * 1.8) * -4;
+                const scale = 1 + Math.sin(elapsed * 1.4) * 0.008;
+                envelopeEl.style.transform = `translate3d(0, ${lift}px, 0) scale(${scale})`;
+            }
+        }
+
+        cards.forEach((card, index) => {
+            const float = Math.sin(elapsed * 1.7 + index * 0.7) * 3;
+            card.style.transform = `translate3d(0, ${float}px, 0)`;
+        });
+    }
+
+    function animateSections(time) {
+        const elapsed = (time - motion.startedAt) / 1000;
+        document.querySelectorAll(".reason-card, .memory-card, .quiz-card, .meter-card").forEach((card, index) => {
+            if (!card.closest(".is-visible") && !card.classList.contains("is-visible")) return;
+            const float = Math.sin(elapsed * 0.9 + index * 0.62) * 1.8;
+            card.style.translate = `0 ${float}px`;
+        });
+    }
+
+    function frame(time) {
+        animateHero(time);
+        animateGallery();
+        animateSections(time);
+        requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+    window.addEventListener("resize", () => {
+        motion.gallery = new WeakMap();
+    });
 }
 
 function loadCachedRemoteSettings() {
@@ -555,6 +656,11 @@ function enableGalleryDrag(gallery) {
                     line.setPointerCapture(event.pointerId);
                 }
                 line.scrollLeft = startScrollLeft - deltaX;
+                const track = line.querySelector(".gallery-track");
+                if (track) {
+                    const current = Number(track.dataset.dragOffset || 0);
+                    track.dataset.dragOffset = String(current - deltaX * 0.02);
+                }
             }
         });
 
@@ -668,30 +774,46 @@ function createHeart() {
     const heart = document.createElement("div");
     heart.classList.add("heart");
     heart.textContent = Math.random() > 0.5 ? "\uD83D\uDC99" : "\uD83E\uDD0D";
-    heart.style.left = Math.random() * window.innerWidth + "px";
-    heart.style.top = window.innerHeight + "px";
+    const startX = Math.random() * window.innerWidth;
+    const driftX = -30 + Math.random() * 60;
+    heart.style.left = `${startX}px`;
+    heart.style.top = `${window.innerHeight}px`;
     heart.style.fontSize = 14 + Math.random() * 22 + "px";
-    heart.style.animationDuration = 2.4 + Math.random() * 1.8 + "s";
 
     document.body.appendChild(heart);
 
-    setTimeout(() => {
-        heart.remove();
-    }, 4200);
+    const duration = 2400 + Math.random() * 1800;
+    heart.animate([
+        { opacity: 1, transform: "translate3d(0, 0, 0) scale(1) rotate(0deg)" },
+        { opacity: 0.88, transform: `translate3d(${driftX * 0.7}px, -105px, 0) scale(1.38) rotate(8deg)` },
+        { opacity: 0, transform: `translate3d(${driftX}px, -230px, 0) scale(1.9) rotate(18deg)` }
+    ], {
+        duration,
+        easing: "cubic-bezier(.2,.85,.25,1)",
+        fill: "forwards"
+    }).onfinish = () => heart.remove();
 }
 
 function createConfettiPiece() {
     const confetti = document.createElement("div");
     confetti.classList.add("confetti");
-    confetti.style.left = Math.random() * window.innerWidth + "px";
+    const startX = Math.random() * window.innerWidth;
+    const driftX = -80 + Math.random() * 160;
+    const rotation = 240 + Math.random() * 720;
+    confetti.style.left = `${startX}px`;
     confetti.style.background = ["#0077b6", "#87ceeb", "#ffffff", "#ffb3c6"][Math.floor(Math.random() * 4)];
-    confetti.style.animationDuration = 2.2 + Math.random() * 1.4 + "s";
     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
     document.body.appendChild(confetti);
 
-    setTimeout(() => {
-        confetti.remove();
-    }, 3800);
+    confetti.animate([
+        { opacity: 1, transform: `translate3d(0, 0, 0) rotate(0deg)` },
+        { opacity: 0.9, transform: `translate3d(${driftX * 0.4}px, 48vh, 0) rotate(${rotation * 0.55}deg)` },
+        { opacity: 0, transform: `translate3d(${driftX}px, 105vh, 0) rotate(${rotation}deg)` }
+    ], {
+        duration: 2200 + Math.random() * 1400,
+        easing: "linear",
+        fill: "forwards"
+    }).onfinish = () => confetti.remove();
 }
 
 async function startMusic() {
@@ -991,6 +1113,7 @@ document.addEventListener("keydown", (event) => {
 
 async function initPage() {
     initSkyCanvas();
+    initMotionEngine();
     cleanupLegacySettingsCache();
     await syncSettingsVersion();
     const hadCachedSettings = loadCachedRemoteSettings();

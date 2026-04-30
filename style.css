@@ -19,6 +19,17 @@ body.modal-open {
     overflow: hidden;
 }
 
+body.js-motion .gate-countdown,
+body.js-motion .envelope,
+body.js-motion .gallery-track,
+body.js-motion .wish-text,
+body.js-motion .swinging,
+body.js-motion .swinging-reverse,
+body.js-motion .heart,
+body.js-motion .confetti {
+    animation: none !important;
+}
+
 html,
 body {
     max-width: 100%;
@@ -48,6 +59,75 @@ body:not(.db-ready) main {
 
 body.envelope-open .gate-countdown {
     display: none;
+}
+
+main {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,0.9), transparent 14rem),
+        radial-gradient(circle at 88% 18%, rgba(186,230,253,0.5), transparent 18rem),
+        linear-gradient(180deg, #eef9ff 0%, #ffffff 32%, #eef8ff 100%);
+}
+
+main > section {
+    position: relative;
+    isolation: isolate;
+}
+
+main > section::before,
+main > section::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+}
+
+main > section::before {
+    width: min(34vw, 430px);
+    height: min(13vw, 150px);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.66);
+    box-shadow:
+        58px -24px 0 rgba(255,255,255,0.54),
+        122px 12px 0 rgba(255,255,255,0.38),
+        -40px 18px 0 rgba(255,255,255,0.42);
+    filter: blur(1px);
+    opacity: 0.75;
+}
+
+main > section::after {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0,119,182,0.18);
+    box-shadow:
+        80px 36px 0 rgba(135,206,235,0.24),
+        160px -18px 0 rgba(255,179,198,0.24),
+        260px 44px 0 rgba(0,119,182,0.12);
+    animation: skyDust 7s ease-in-out infinite alternate;
+}
+
+main > section:nth-child(odd)::before {
+    left: -90px;
+    top: 52px;
+    animation: sectionCloudLeft 18s ease-in-out infinite alternate;
+}
+
+main > section:nth-child(even)::before {
+    right: -110px;
+    top: 70px;
+    animation: sectionCloudRight 20s ease-in-out infinite alternate;
+}
+
+main > section:nth-child(odd)::after {
+    right: 18%;
+    top: 26%;
+}
+
+main > section:nth-child(even)::after {
+    left: 14%;
+    top: 22%;
 }
 
 /* --- HERO SECTION (FULL SCREEN) --- */
@@ -399,6 +479,21 @@ body.envelope-open .gate-countdown {
     to { transform: translateY(4px) rotate(5deg); }
 }
 
+@keyframes sectionCloudLeft {
+    from { transform: translateX(0) translateY(0); }
+    to { transform: translateX(42px) translateY(-10px); }
+}
+
+@keyframes sectionCloudRight {
+    from { transform: translateX(0) translateY(0); }
+    to { transform: translateX(-46px) translateY(12px); }
+}
+
+@keyframes skyDust {
+    from { transform: translateY(0); opacity: 0.45; }
+    to { transform: translateY(-18px); opacity: 0.9; }
+}
+
 /* --- ANIMASI KETIKA AMPLOP DIKLIK --- */
 .envelope-wrapper.is-opened .flap {
     transform: rotateX(180deg); /* Tutup amplop terbuka ke atas */
@@ -537,7 +632,9 @@ body.envelope-open .gate-countdown {
 
 .timeline-section {
     padding: 80px 20px;
-    background: white;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.72), rgba(238,248,255,0.58)),
+        radial-gradient(circle at 50% 120%, rgba(135,206,235,0.22), transparent 42%);
     text-align: center;
     overflow: hidden; /* Mencegah ayunan keluar layar */
 }
@@ -624,7 +721,9 @@ body.envelope-open .gate-countdown {
     padding: 54px 0;
     overflow: hidden;
     text-align: center;
-    background: linear-gradient(180deg, #ffffff, #eef8ff);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.56), rgba(224,247,255,0.72)),
+        radial-gradient(circle at 16% 40%, rgba(135,206,235,0.18), transparent 18rem);
     width: 100%;
     margin-left: 0;
 }
@@ -896,7 +995,9 @@ textarea:focus {
 /* --- DETAILED TIMELINE SECTION --- */
 .detailed-timeline {
     padding: 80px 20px;
-    background-color: #f0f8ff; /* Nyambung sama warna body */
+    background:
+        linear-gradient(180deg, rgba(240,248,255,0.9), rgba(255,255,255,0.7)),
+        radial-gradient(circle at 82% 12%, rgba(255,255,255,0.78), transparent 16rem);
     text-align: center;
 }
 
@@ -1015,7 +1116,9 @@ textarea:focus {
 .little-things {
     padding: 80px 20px;
     text-align: center;
-    background: #ffffff;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.84), rgba(238,248,255,0.62)),
+        radial-gradient(circle at 8% 70%, rgba(186,230,253,0.32), transparent 18rem);
 }
 
 .little-things h2 {
@@ -1089,13 +1192,17 @@ textarea:focus {
 .love-meter-section,
 .quiz-section,
 .surprise-section {
-    background: linear-gradient(180deg, #eef8ff, #ffffff);
+    background:
+        linear-gradient(180deg, rgba(238,248,255,0.84), rgba(255,255,255,0.76)),
+        radial-gradient(circle at 78% 22%, rgba(135,206,235,0.18), transparent 18rem);
 }
 
 .playlist-section,
 .memory-map-section,
 .carousel-section {
-    background: #ffffff;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(240,248,255,0.72)),
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.8), transparent 16rem);
 }
 
 .wish-jar-section h2,
@@ -1601,6 +1708,25 @@ textarea:focus {
         padding: 28px 14px;
     }
 
+    main > section::before {
+        width: 220px;
+        height: 72px;
+        opacity: 0.45;
+    }
+
+    main > section::after {
+        opacity: 0.5;
+        transform: scale(0.75);
+    }
+
+    main > section:nth-child(odd)::before {
+        left: -130px;
+    }
+
+    main > section:nth-child(even)::before {
+        right: -145px;
+    }
+
     .gate-countdown {
         padding: 96px 14px 22px;
     }
@@ -1976,8 +2102,32 @@ textarea:focus {
 .love-reasons{
     padding:80px 20px;
     text-align:center;
-    background:rgba(255,255,255,0.5);
+    background:
+        linear-gradient(180deg, rgba(238,248,255,0.92), rgba(255,255,255,0.66)),
+        radial-gradient(circle at 28% 34%, rgba(255,255,255,0.9), transparent 13rem),
+        radial-gradient(circle at 75% 44%, rgba(186,230,253,0.32), transparent 18rem);
     backdrop-filter: blur(10px);
+}
+
+.love-reasons::before {
+    top: 48px !important;
+}
+
+.love-reasons::after {
+    content: "♡";
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: transparent;
+    box-shadow:
+        120px 70px 0 rgba(0,119,182,0.14),
+        -80px 120px 0 rgba(135,206,235,0.26),
+        240px 135px 0 rgba(255,179,198,0.22);
+    color: rgba(0,119,182,0.16);
+    font-size: 3rem;
+    right: 20%;
+    top: 30%;
+    animation: skyDust 6s ease-in-out infinite alternate;
 }
 
 .reason-grid{
