@@ -1,4 +1,5 @@
-﻿const SETTINGS_KEY = "cayaBirthdaySettings";
+﻿const LEGACY_SETTINGS_KEY = "cayaBirthdaySettings";
+const SETTINGS_KEY = "cayaBirthdaySettingsLite";
 const SETTINGS_VERSION_KEY = "cayaBirthdaySettingsVersion";
 const defaultSettings = {
     unlockDate: "",
@@ -41,6 +42,14 @@ let settings = { ...defaultSettings };
 let settingsReady = false;
 let countdownTimer = null;
 
+function cleanupLegacySettingsCache() {
+    try {
+        localStorage.removeItem(LEGACY_SETTINGS_KEY);
+    } catch (error) {
+        // Kalau storage browser sedang penuh/bermasalah, flow utama tetap lanjut ambil D1.
+    }
+}
+
 function loadCachedRemoteSettings() {
     try {
         const cached = JSON.parse(localStorage.getItem(SETTINGS_KEY));
@@ -51,6 +60,26 @@ function loadCachedRemoteSettings() {
         return true;
     } catch (error) {
         return false;
+    }
+}
+
+function makeLightweightSettingsCache(value) {
+    return {
+        ...value,
+        __source: "d1",
+        musicSrc: "",
+        polaroids: (value.polaroids || []).map((item) => ({ ...item, image: "" })),
+        carousel: (value.carousel || []).map((item) => ({ ...item, src: "" })),
+        movingGallery: (value.movingGallery || []).map((item) => ({ ...item, src: "" }))
+    };
+}
+
+function saveSettingsCache(value) {
+    try {
+        localStorage.removeItem(SETTINGS_KEY);
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(makeLightweightSettingsCache(value)));
+    } catch (error) {
+        localStorage.removeItem(SETTINGS_KEY);
     }
 }
 
@@ -66,7 +95,7 @@ async function loadRemoteSettings() {
             const remoteSettings = await response.json();
             settings = mergeSettings(defaultSettings, remoteSettings);
             settingsReady = true;
-            localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings, __source: "d1" }));
+            saveSettingsCache(settings);
             return;
         } catch (error) {
             if (attempt === 3) {
@@ -705,6 +734,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function initPage() {
+    cleanupLegacySettingsCache();
     const hadCachedSettings = loadCachedRemoteSettings();
     if (hadCachedSettings) {
         applySettings();
@@ -731,4 +761,6 @@ async function initPage() {
 }
 
 initPage();
+
+
 
