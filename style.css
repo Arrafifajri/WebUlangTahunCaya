@@ -1191,6 +1191,7 @@ textarea:focus {
     background: #ffffff;
     border-radius: 22px;
     box-shadow: 0 24px 70px rgba(2,62,138,0.28);
+    box-sizing: border-box;
 }
 
 .modal-close {
@@ -1217,6 +1218,7 @@ textarea:focus {
 
 .photo-modal img {
     width: 100%;
+    height: auto;
     max-height: 58vh;
     object-fit: contain;
     border-radius: 16px;
@@ -1337,6 +1339,50 @@ textarea:focus {
     .click-instruction {
         margin-top: 22px;
         font-size: 0.9rem;
+    }
+
+    .modal {
+        padding: 12px;
+        align-items: center;
+    }
+
+    .modal-content {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        max-height: calc(100dvh - 24px);
+        border-radius: 18px;
+        overflow-x: hidden;
+    }
+
+    .photo-modal {
+        padding: 16px 16px 24px;
+    }
+
+    .photo-modal img {
+        width: 100%;
+        max-width: 100%;
+        max-height: min(58dvh, 520px);
+        border-radius: 14px;
+    }
+
+    .photo-modal h3 {
+        margin-top: 16px;
+        font-size: clamp(1.25rem, 7vw, 1.65rem);
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+
+    .photo-modal p {
+        font-size: 0.95rem;
+        line-height: 1.55;
+    }
+
+    .modal-close {
+        top: 8px;
+        right: 8px;
+        width: 34px;
+        height: 34px;
+        font-size: 1.55rem;
     }
 
     /* 2. Timeline Polaroid Gantung */
