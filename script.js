@@ -567,7 +567,11 @@ function renderPolaroids() {
 
         const caption = document.createElement("div");
         caption.className = "caption";
-        caption.innerHTML = `<h3>${item.title}</h3><p>${item.caption}</p>`;
+        const title = document.createElement("h3");
+        title.textContent = item.title || "";
+        const text = document.createElement("p");
+        text.textContent = item.caption || "";
+        caption.append(title, text);
 
         button.append(pin, image, caption);
         outer.appendChild(button);
@@ -698,14 +702,19 @@ function renderDetailedTimeline() {
         const block = document.createElement("div");
         block.className = "timeline-block";
         block.setAttribute("data-aos", index % 2 === 0 ? "fade-right" : "fade-left");
-        block.innerHTML = `
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-                <h3>${item.title}</h3>
-                <p>${item.text}</p>
-                <span class="timeline-date">${item.date}</span>
-            </div>
-        `;
+        const dot = document.createElement("div");
+        dot.className = "timeline-dot";
+        const content = document.createElement("div");
+        content.className = "timeline-content";
+        const title = document.createElement("h3");
+        title.textContent = item.title || "";
+        const text = document.createElement("p");
+        text.textContent = item.text || "";
+        const date = document.createElement("span");
+        date.className = "timeline-date";
+        date.textContent = item.date || "";
+        content.append(title, text, date);
+        block.append(dot, content);
         container.appendChild(block);
     });
 }
@@ -718,7 +727,11 @@ function renderLittleThings() {
     settings.littleThings.forEach((item) => {
         const card = document.createElement("article");
         card.className = "memory-card";
-        card.innerHTML = `<span>${item.label}</span><strong>${item.value}</strong>`;
+        const label = document.createElement("span");
+        label.textContent = item.label || "";
+        const value = document.createElement("strong");
+        value.textContent = item.value || "";
+        card.append(label, value);
         grid.appendChild(card);
     });
 }
@@ -809,15 +822,19 @@ function applySettings() {
     setText(".letter p", settings.heroMessage);
     setText(".love-reasons h2", settings.loveTitle);
     if (music) {
-        const selectedSrc = settings.musicSrc && settings.musicSrc.trim() ? settings.musicSrc : "musik.mp3";
+        const selectedSrc = settings.musicSrc && settings.musicSrc.trim() ? settings.musicSrc : "";
         if (musicSource) {
             musicSource.src = selectedSrc;
         } else {
-            music.src = selectedSrc;
+            if (selectedSrc) {
+                music.src = selectedSrc;
+            } else {
+                music.removeAttribute("src");
+            }
         }
         music.loop = true;
-        music.preload = "auto";
-        music.load();
+        music.preload = selectedSrc ? "auto" : "none";
+        if (selectedSrc) music.load();
     }
     renderReasons();
     renderPolaroids();
@@ -879,6 +896,8 @@ function createConfettiPiece() {
 
 async function startMusic() {
     if (!music) return;
+    const selectedSrc = music.currentSrc || music.getAttribute("src") || musicSource?.getAttribute("src") || "";
+    if (!selectedSrc) return;
 
     const ensurePlayable = () => new Promise((resolve) => {
         if (music.readyState >= 2) {
@@ -970,6 +989,7 @@ function showPhotoFallback(image) {
 
 function drawWish() {
     if (!isBirthdayUnlocked()) return;
+    if (!wishes.length) return;
 
     const wishText = document.getElementById("wishText");
     const wish = wishes[Math.floor(Math.random() * wishes.length)];
@@ -1067,6 +1087,7 @@ function renderCarousel() {
 
 function moveCarousel(direction) {
     if (!isBirthdayUnlocked()) return;
+    if (!carouselPhotos.length) return;
 
     carouselIndex = (carouselIndex + direction + carouselPhotos.length) % carouselPhotos.length;
     renderCarousel();

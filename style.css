@@ -332,7 +332,6 @@ main > section:nth-child(even)::after {
     border-radius: 999px;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.88), rgba(0,119,182,0.32));
 }
-}
 
 .envelope-wrapper.is-waiting {
     cursor: not-allowed;

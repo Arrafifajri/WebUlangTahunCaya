@@ -120,7 +120,8 @@ async function getSavedSettings() {
     const response = await fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) {
         const result = await response.json().catch(() => ({ error: "API belum aktif." }));
-        throw new Error(result.error || "API belum aktif.");
+        const detail = result.detail ? ` ${result.detail}` : "";
+        throw new Error(`${result.error || "API belum aktif."}${detail}`);
     }
 
     const data = await response.json();
@@ -374,7 +375,9 @@ function cardShell(title, onRemove) {
     card.className = "edit-card";
     const head = document.createElement("div");
     head.className = "edit-card-head";
-    head.innerHTML = `<h4>${title}</h4>`;
+    const heading = document.createElement("h4");
+    heading.textContent = title;
+    head.appendChild(heading);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "danger-button";

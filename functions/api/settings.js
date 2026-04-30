@@ -64,6 +64,10 @@ async function readSettings(env) {
 }
 
 export async function onRequestGet({ env }) {
+    if (!env.SETTINGS_DB) {
+        return json({ error: "Binding D1 SETTINGS_DB belum diset di Cloudflare Pages." }, { status: 500 });
+    }
+
     try {
         const settings = await readSettings(env);
         if (!settings) {
