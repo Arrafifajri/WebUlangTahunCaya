@@ -374,6 +374,128 @@ body.envelope-open .gate-countdown {
     font-style: italic; /* Font miring agar estetik */
 }
 
+/* MOVING GALLERY */
+.moving-gallery-section {
+    padding: 78px 0;
+    overflow: hidden;
+    text-align: center;
+    background: linear-gradient(180deg, #ffffff, #eef8ff);
+}
+
+.moving-gallery-section h2 {
+    font-size: 2.3rem;
+    margin-bottom: 30px;
+}
+
+.moving-gallery {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+}
+
+.gallery-track {
+    display: flex;
+    width: max-content;
+    gap: 18px;
+    will-change: transform;
+}
+
+.gallery-track-right {
+    animation: galleryMoveRight 34s linear infinite;
+}
+
+.gallery-track-left {
+    animation: galleryMoveLeft 38s linear infinite;
+}
+
+.gallery-track-slow {
+    animation-duration: 44s;
+}
+
+.moving-gallery:hover .gallery-track,
+.moving-gallery:focus-within .gallery-track {
+    animation-play-state: paused;
+}
+
+.gallery-marquee-card {
+    position: relative;
+    flex: 0 0 auto;
+    width: clamp(170px, 22vw, 260px);
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border: 0;
+    border-radius: 18px;
+    background: #dff3ff;
+    box-shadow: 0 18px 38px rgba(0,119,182,0.13);
+    cursor: pointer;
+}
+
+.gallery-marquee-card img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.gallery-marquee-card:hover img,
+.gallery-marquee-card:focus-visible img {
+    transform: scale(1.06);
+}
+
+.gallery-marquee-card span {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    color: #023e8a;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gallery-marquee-card.missing-gallery-photo::before {
+    content: "Foto belum terbaca";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    color: #0077b6;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e0f2fe, #ffffff);
+    z-index: 1;
+}
+
+.moving-gallery.is-empty::before {
+    content: "Upload foto dari dashboard untuk menampilkan galeri.";
+    display: block;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 18px 22px;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #0077b6;
+    font-weight: 700;
+    box-shadow: 0 12px 28px rgba(0,119,182,0.08);
+}
+
+@keyframes galleryMoveLeft {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@keyframes galleryMoveRight {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
+}
+
 .polaroid.missing-photo::before {
     content: "Tambahkan foto di folder";
     display: grid;
@@ -1273,6 +1395,7 @@ textarea:focus {
 
     .little-things h2,
     .countdown-section h2,
+    .moving-gallery-section h2,
     .wish-jar-section h2,
     .playlist-section h2,
     .love-meter-section h2,
@@ -1315,6 +1438,30 @@ textarea:focus {
     .quiz-card,
     .surprise-modal {
         padding: 24px 18px;
+    }
+
+    .moving-gallery-section {
+        padding: 58px 0;
+    }
+
+    .moving-gallery {
+        gap: 12px;
+    }
+
+    .gallery-track {
+        gap: 12px;
+    }
+
+    .gallery-marquee-card {
+        width: 150px;
+        border-radius: 15px;
+    }
+
+    .gallery-marquee-card span {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        font-size: 0.74rem;
     }
 }
 

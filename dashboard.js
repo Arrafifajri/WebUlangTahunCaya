@@ -63,6 +63,7 @@ const defaultSettings = {
         { src: "jadian.jpg", title: "Jadian", caption: "Hari yang bikin cerita ini terasa lebih serius dan hangat." },
         { src: "foto_favorit.jpg", title: "Foto Favorit", caption: "Ganti file ini dengan foto favorit kalian berdua." }
     ],
+    movingGallery: [],
     letterTitle: "Surat Untukmu 💙",
     letterParagraphs: [
         "Selamat ulang tahun, sayang. Semoga umur barumu selalu dipenuhi hal-hal baik, langkah yang dimudahkan, hati yang dikuatkan, dan mimpi-mimpi yang pelan-pelan jadi nyata.",
@@ -209,6 +210,7 @@ function collectSettings() {
         memoryMap: collectMemoryMap(),
         quiz: collectQuiz(),
         carousel: collectCarousel(),
+        movingGallery: collectMovingGallery(),
         letterTitle: $("letterTitle").value.trim(),
         letterParagraphs: parseParagraphs("letterParagraphs"),
         surpriseTitle: $("surpriseTitle").value.trim(),
@@ -317,11 +319,29 @@ async function uploadCarouselImage(event, index) {
     $("statusText").style.color = "#075985";
 }
 
+async function uploadMovingGalleryImage(event, index) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const dataUrl = await compressImage(file);
+    const gallery = currentSettings.movingGallery;
+
+    gallery[index] = {
+        ...(gallery[index] || { title: `Foto ${index + 1}`, caption: "" }),
+        src: dataUrl
+    };
+
+    renderMovingGalleryEditor();
+    $("statusText").textContent = "Gambar galeri bergerak sudah masuk. Jangan lupa klik Simpan Pengaturan.";
+    $("statusText").style.color = "#075985";
+}
+
 function renderGuiEditors() {
     currentSettings.littleThings ||= [];
     currentSettings.detailedTimeline ||= [];
     currentSettings.polaroids ||= [];
     currentSettings.carousel ||= [];
+    currentSettings.movingGallery ||= [];
     currentSettings.playlist ||= [];
     currentSettings.memoryMap ||= [];
     currentSettings.quiz ||= [];
@@ -330,6 +350,7 @@ function renderGuiEditors() {
     renderTimelineEditor();
     renderPolaroidEditor();
     renderCarouselEditor();
+    renderMovingGalleryEditor();
     renderPlaylistEditor();
     renderMemoryMapEditor();
     renderQuizEditor();
@@ -428,6 +449,19 @@ function renderCarouselEditor() {
     });
 }
 
+function renderMovingGalleryEditor() {
+    const target = $("movingGalleryEditor");
+    target.innerHTML = "";
+    currentSettings.movingGallery.forEach((item, index) => {
+        const card = cardShell(`Galeri ${index + 1}`, () => {
+            currentSettings.movingGallery.splice(index, 1);
+            renderMovingGalleryEditor();
+        });
+        card.append(imagePicker("Upload foto", item.src, (event) => uploadMovingGalleryImage(event, index)), inputField("Judul", item.title, (value) => item.title = value), inputField("Caption", item.caption, (value) => item.caption = value, true));
+        target.appendChild(card);
+    });
+}
+
 function renderPlaylistEditor() {
     const target = $("playlistEditor");
     target.innerHTML = "";
@@ -472,6 +506,7 @@ function collectLittleThings() { return currentSettings.littleThings; }
 function collectTimeline() { return currentSettings.detailedTimeline; }
 function collectPolaroids() { return currentSettings.polaroids; }
 function collectCarousel() { return currentSettings.carousel; }
+function collectMovingGallery() { return currentSettings.movingGallery; }
 function collectPlaylist() { return currentSettings.playlist; }
 function collectMemoryMap() { return currentSettings.memoryMap; }
 function collectQuiz() { return currentSettings.quiz; }
@@ -494,6 +529,11 @@ function addPolaroid() {
 function addCarouselItem() {
     currentSettings.carousel.push({ src: "", title: "Foto baru", caption: "Tulis caption foto." });
     renderCarouselEditor();
+}
+
+function addMovingGalleryItem() {
+    currentSettings.movingGallery.push({ src: "", title: "Foto baru", caption: "Tulis caption foto." });
+    renderMovingGalleryEditor();
 }
 
 function addPlaylistItem() {

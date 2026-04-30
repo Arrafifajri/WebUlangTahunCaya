@@ -22,6 +22,7 @@ const defaultSettings = {
     memoryMap: [],
     quiz: [],
     carousel: [],
+    movingGallery: [],
     letterTitle: "",
     letterParagraphs: [],
     surpriseTitle: "",
@@ -252,6 +253,58 @@ function renderPolaroids() {
     });
 }
 
+function getGalleryPhotos() {
+    return (settings.movingGallery || []).filter((item) => item && item.src).map((item) => ({
+        src: item.src,
+        title: item.title || "Foto",
+        caption: item.caption || ""
+    }));
+}
+
+function renderMovingGallery() {
+    const gallery = document.getElementById("movingGallery");
+    if (!gallery) return;
+
+    const tracks = gallery.querySelectorAll(".gallery-track");
+    const photos = getGalleryPhotos();
+    tracks.forEach((track) => {
+        track.innerHTML = "";
+    });
+
+    if (!photos.length) {
+        gallery.classList.add("is-empty");
+        return;
+    }
+
+    gallery.classList.remove("is-empty");
+    tracks.forEach((track, trackIndex) => {
+        const rowPhotos = [];
+        const offset = trackIndex % photos.length;
+        for (let i = 0; i < Math.max(photos.length * 2, 8); i++) {
+            rowPhotos.push(photos[(i + offset) % photos.length]);
+        }
+
+        rowPhotos.forEach((photo) => {
+            const button = document.createElement("button");
+            button.className = "gallery-marquee-card";
+            button.type = "button";
+            button.onclick = () => openLightbox(photo.src, photo.title, photo.caption || photo.title);
+
+            const image = document.createElement("img");
+            image.src = photo.src;
+            image.alt = photo.title;
+            image.loading = "lazy";
+            image.onerror = () => button.classList.add("missing-gallery-photo");
+
+            const label = document.createElement("span");
+            label.textContent = photo.title;
+
+            button.append(image, label);
+            track.appendChild(button);
+        });
+    });
+}
+
 function renderDetailedTimeline() {
     const container = document.querySelector(".timeline-container");
     if (!container) return;
@@ -363,6 +416,7 @@ function applySettings() {
     }
     renderReasons();
     renderPolaroids();
+    renderMovingGallery();
     renderDetailedTimeline();
     renderLittleThings();
     renderPlaylist();
