@@ -1,4 +1,5 @@
 const SETTINGS_KEY = "cayaBirthdaySettings";
+const SETTINGS_VERSION_KEY = "cayaBirthdaySettingsVersion";
 const defaultSettings = {
     unlockDate: "2026-05-06",
     countdownKicker: "Menuju 06 Mei",
@@ -136,6 +137,24 @@ async function loadRemoteSettings() {
     }
 }
 
+async function syncSettingsVersion() {
+    try {
+        const response = await fetch(`/api/version?t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        const remoteVersion = String(data?.version || "");
+        if (!remoteVersion) return;
+
+        const localVersion = localStorage.getItem(SETTINGS_VERSION_KEY) || "";
+        if (localVersion !== remoteVersion) {
+            localStorage.removeItem(SETTINGS_KEY);
+            localStorage.setItem(SETTINGS_VERSION_KEY, remoteVersion);
+        }
+    } catch (error) {
+        // Abaikan error versi, app tetap jalan pakai flow biasa.
+    }
+}
+
 const music = document.getElementById("birthdayMusic");
 const envelope = document.querySelector(".envelope-wrapper");
 const clickInstruction = document.querySelector(".click-instruction");
@@ -159,14 +178,27 @@ function padNumber(value) {
 }
 
 function getUnlockDate() {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(settings.unlockDate || "");
-    if (!match) {
-        return new Date(2026, 4, 6, 0, 0, 0);
+    const raw = String(settings.unlockDate || "").trim();
+
+    // Format utama dashboard: YYYY-MM-DD
+    let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+    if (match) {
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        return new Date(year, month - 1, day, 0, 0, 0, 0);
     }
-    const year = Number(match[1]);
-    const month = Number(match[2]);
-    const day = Number(match[3]);
-    return new Date(year, month - 1, day, 0, 0, 0, 0);
+
+    // Fallback jika ada format DD/MM/YYYY dari input manual
+    match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw);
+    if (match) {
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        const year = Number(match[3]);
+        return new Date(year, month - 1, day, 0, 0, 0, 0);
+    }
+
+    return new Date(2026, 4, 6, 0, 0, 0, 0);
 }
 
 function isBirthdayUnlocked() {
@@ -211,6 +243,7 @@ function lockEnvelope() {
 
 function unlockEnvelope() {
     document.body.classList.remove("content-locked");
+    document.body.classList.remove("locked");
     envelope.classList.remove("is-waiting");
     clickInstruction.textContent = settings.unlockedInstruction;
 }
@@ -681,6 +714,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function initPage() {
+    await syncSettingsVersion();
     await loadRemoteSettings();
     applySettings();
     updateCountdown();
