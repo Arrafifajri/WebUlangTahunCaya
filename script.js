@@ -30,6 +30,7 @@ const defaultSettings = {
     videoTitle: "",
     videoText: "",
     videoSrc: "",
+    videoName: "",
     curhatTitle: "",
     curhatPrompt: ""
 };
@@ -796,7 +797,7 @@ function renderVideoSection() {
         return;
     }
 
-    if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(src)) {
+    if (src.startsWith("data:video/") || src.startsWith("/api/media") || /\.(mp4|webm|ogg)(\?.*)?$/i.test(src)) {
         const video = document.createElement("video");
         video.src = src;
         video.controls = true;

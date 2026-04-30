@@ -66,6 +66,7 @@ const defaultSettings = {
     videoTitle: "Video Untukmu",
     videoText: "Simpan video kecil yang paling kamu suka di sini.",
     videoSrc: "",
+    videoName: "",
     curhatTitle: "Pesan Untukmu 💌",
     curhatPrompt: "Kalo ada yang mau diungkapin, tulis di bawah ya sayang..."
 };
@@ -177,11 +178,17 @@ async function fillForm() {
         }
     });
 
+    if (String(data.videoSrc || "").startsWith("/api/media") || String(data.videoSrc || "").startsWith("data:video/")) {
+        $("videoSrc").value = "";
+    }
+
     $("letterParagraphs").value = data.letterParagraphs.join("\n\n");
     renderGuiEditors();
 }
 
 function collectSettings() {
+    const videoLink = $("videoSrc").value.trim();
+
     return {
         unlockDate: $("unlockDate").value || defaultSettings.unlockDate,
         countdownKicker: $("countdownKicker").value.trim(),
@@ -210,7 +217,8 @@ function collectSettings() {
         surpriseStrong: $("surpriseStrong").value.trim(),
         videoTitle: $("videoTitle").value.trim(),
         videoText: $("videoText").value.trim(),
-        videoSrc: $("videoSrc").value.trim(),
+        videoSrc: videoLink || currentSettings.videoSrc || "",
+        videoName: videoLink ? "" : currentSettings.videoName || "",
         curhatTitle: $("curhatTitle").value.trim(),
         curhatPrompt: $("curhatPrompt").value.trim()
     };
@@ -421,6 +429,7 @@ function renderGuiEditors() {
     currentSettings.movingGallery ||= [];
     currentSettings.quiz ||= [];
     $("musicFileName").textContent = currentSettings.musicName || (currentSettings.musicSrc ? "Musik dashboard tersimpan." : "Belum ada musik upload.");
+    $("videoFileName").textContent = currentSettings.videoName || (currentSettings.videoSrc ? "Video dashboard tersimpan." : "Belum ada video upload.");
     renderLittleThingsEditor();
     renderTimelineEditor();
     renderPolaroidEditor();
@@ -641,6 +650,51 @@ function uploadMusic(event) {
             $("statusText").textContent = `${error.message} Musik belum tersimpan.`;
             $("statusText").style.color = "#b91c1c";
         }
+    };
+    reader.readAsDataURL(file);
+}
+
+function uploadVideo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+        $("statusText").textContent = "File video terlalu besar. Pakai video pendek di bawah 8 MB, atau tempel link YouTube/MP4 saja.";
+        $("statusText").style.color = "#b91c1c";
+        event.target.value = "";
+        return;
+    }
+
+    if (!file.type.startsWith("video/")) {
+        $("statusText").textContent = "File yang dipilih bukan video. Pilih MP4, WebM, atau OGG.";
+        $("statusText").style.color = "#b91c1c";
+        event.target.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+        try {
+            $("statusText").textContent = `Mengupload ${file.name} ke Cloudflare KV...`;
+            $("statusText").style.color = "#075985";
+            const media = await uploadMediaToKv(reader.result, file.name, "video");
+            currentSettings.videoSrc = media.src;
+            currentSettings.videoName = file.name;
+            $("videoSrc").value = "";
+            $("videoFileName").textContent = file.name;
+            $("statusText").textContent = "Video sudah masuk ke KV. Jangan lupa klik Simpan Pengaturan.";
+            $("statusText").style.color = "#075985";
+        } catch (error) {
+            $("statusText").textContent = `${error.message} Video belum tersimpan.`;
+            $("statusText").style.color = "#b91c1c";
+        } finally {
+            event.target.value = "";
+        }
+    };
+    reader.onerror = () => {
+        $("statusText").textContent = "Gagal membaca file video.";
+        $("statusText").style.color = "#b91c1c";
+        event.target.value = "";
     };
     reader.readAsDataURL(file);
 }

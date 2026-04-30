@@ -214,6 +214,12 @@
                         Link video
                         <input id="videoSrc" type="url" placeholder="YouTube / youtu.be / link mp4">
                     </label>
+                    <p class="panel-note compact-note">Kalau upload file, pakai video pendek di bawah 8 MB. Untuk video panjang lebih aman pakai link YouTube atau link MP4.</p>
+                    <label class="upload-box video-upload">
+                        Upload file video
+                        <input id="videoUpload" type="file" accept="video/mp4,video/webm,video/ogg,video/*" onchange="uploadVideo(event)">
+                        <span id="videoFileName">Belum ada video upload.</span>
+                    </label>
                 </div>
                 <div class="field-grid">
                     <label>
