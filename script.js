@@ -18,8 +18,6 @@ const defaultSettings = {
     detailedTimeline: [],
     littleThings: [],
     wishes: [],
-    playlist: [],
-    memoryMap: [],
     quiz: [],
     carousel: [],
     movingGallery: [],
@@ -43,6 +41,19 @@ let settings = { ...defaultSettings };
 let settingsReady = false;
 let countdownTimer = null;
 
+function loadCachedRemoteSettings() {
+    try {
+        const cached = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+        if (!cached || cached.__source !== "d1") return false;
+        delete cached.__source;
+        settings = mergeSettings(defaultSettings, cached);
+        settingsReady = true;
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 async function loadRemoteSettings() {
     // Retry singkat untuk perangkat yang koneksi mobile-nya tidak stabil.
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -55,6 +66,7 @@ async function loadRemoteSettings() {
             const remoteSettings = await response.json();
             settings = mergeSettings(defaultSettings, remoteSettings);
             settingsReady = true;
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings, __source: "d1" }));
             return;
         } catch (error) {
             if (attempt === 3) {
@@ -296,10 +308,7 @@ function renderMovingGallery() {
             image.loading = "lazy";
             image.onerror = () => button.classList.add("missing-gallery-photo");
 
-            const label = document.createElement("span");
-            label.textContent = photo.title;
-
-            button.append(image, label);
+            button.append(image);
             track.appendChild(button);
         });
     });
@@ -336,39 +345,6 @@ function renderLittleThings() {
         card.className = "memory-card";
         card.innerHTML = `<span>${item.label}</span><strong>${item.value}</strong>`;
         grid.appendChild(card);
-    });
-}
-
-function renderPlaylist() {
-    const list = document.querySelector(".playlist-list");
-    if (!list) return;
-    list.innerHTML = "";
-
-    settings.playlist.forEach((song, index) => {
-        const card = document.createElement("article");
-        card.className = "song-card";
-        card.innerHTML = `
-            <span>${padNumber(index + 1)}</span>
-            <div>
-                <h3>${song.title}</h3>
-                <p>${song.text}</p>
-            </div>
-            <a href="${song.link}" target="_blank" rel="noreferrer">Buka</a>
-        `;
-        list.appendChild(card);
-    });
-}
-
-function renderMemoryMap() {
-    const board = document.querySelector(".map-board");
-    if (!board) return;
-    board.innerHTML = "";
-
-    settings.memoryMap.forEach((place, index) => {
-        const card = document.createElement("article");
-        card.className = "map-pin";
-        card.innerHTML = `<span>${padNumber(index + 1)}</span><h3>${place.title}</h3><p>${place.text}</p>`;
-        board.appendChild(card);
     });
 }
 
@@ -419,8 +395,6 @@ function applySettings() {
     renderMovingGallery();
     renderDetailedTimeline();
     renderLittleThings();
-    renderPlaylist();
-    renderMemoryMap();
     renderLetterAndSurprise();
     wishes = settings.wishes;
     quizQuestions = settings.quiz;
@@ -731,6 +705,18 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function initPage() {
+    const hadCachedSettings = loadCachedRemoteSettings();
+    if (hadCachedSettings) {
+        applySettings();
+        document.body.classList.add("db-ready");
+        updateCountdown();
+        renderLastMessage();
+        renderQuiz();
+        renderCarousel();
+        if (countdownTimer) clearInterval(countdownTimer);
+        countdownTimer = setInterval(updateCountdown, 1000);
+    }
+
     await syncSettingsVersion();
     await loadRemoteSettings();
     if (!settingsReady) return;

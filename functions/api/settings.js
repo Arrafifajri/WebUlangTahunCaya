@@ -27,23 +27,29 @@ async function readSettings(env) {
         return null;
     }
 
-    await env.SETTINGS_DB.prepare(CREATE_CHUNK_TABLE_SQL).run();
-    await env.SETTINGS_DB.prepare(CREATE_LEGACY_TABLE_SQL).run();
-
-    const chunkRows = await env.SETTINGS_DB
-        .prepare("SELECT chunk_text FROM site_settings_chunks WHERE id = ?1 ORDER BY chunk_index ASC")
-        .bind(SETTINGS_KEY)
-        .all();
+    let chunkRows;
+    try {
+        chunkRows = await env.SETTINGS_DB
+            .prepare("SELECT chunk_text FROM site_settings_chunks WHERE id = ?1 ORDER BY chunk_index ASC")
+            .bind(SETTINGS_KEY)
+            .all();
+    } catch (error) {
+        return null;
+    }
 
     let payload = "";
     if (chunkRows?.results?.length) {
         payload = chunkRows.results.map((row) => row.chunk_text || "").join("");
     } else {
-        const row = await env.SETTINGS_DB
-            .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
-            .bind(SETTINGS_KEY)
-            .first();
-        payload = row?.settings_json || "";
+        try {
+            const row = await env.SETTINGS_DB
+                .prepare("SELECT settings_json FROM site_settings WHERE id = ?1")
+                .bind(SETTINGS_KEY)
+                .first();
+            payload = row?.settings_json || "";
+        } catch (error) {
+            payload = "";
+        }
     }
 
     try {

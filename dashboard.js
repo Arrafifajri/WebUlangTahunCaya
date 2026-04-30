@@ -43,16 +43,6 @@ const defaultSettings = {
         "Semoga kamu selalu ingat kalau kamu sangat berharga.",
         "Semoga langkahmu ringan, rezekimu luas, dan senyummu sering muncul."
     ],
-    playlist: [
-        { title: "Lagu waktu kangen", text: "Ganti judul ini dengan lagu yang paling sering ngingetin kamu sama dia.", link: "https://open.spotify.com" },
-        { title: "Lagu perjalanan", text: "Cocok buat lagu yang pernah kalian dengar bareng di jalan.", link: "https://www.youtube.com" },
-        { title: "Lagu ulang tahun", text: "Simpan lagu paling manis buat penutup hari spesialnya.", link: "https://open.spotify.com" }
-    ],
-    memoryMap: [
-        { title: "Tempat pertama ketemu", text: "Tulis tempatnya di sini, biar jadi penanda awal cerita." },
-        { title: "Tempat first date", text: "Tempat yang bikin deg-degan tapi sekarang jadi kenangan lucu." },
-        { title: "Tempat makan favorit", text: "Tempat sederhana yang rasanya jadi spesial karena bareng kamu." }
-    ],
     quiz: [
         { question: "Apa hadiah paling manis dari hubungan ini?", options: ["Saling punya rumah pulang", "Menang debat", "Jarang chat"], answer: 0 },
         { question: "Kalau lagi kangen, yang paling cocok dilakukan apa?", options: ["Ngambek diam-diam", "Bilang baik-baik", "Hilang tanpa kabar"], answer: 1 },
@@ -206,8 +196,6 @@ function collectSettings() {
         polaroids: collectPolaroids(),
         detailedTimeline: collectTimeline(),
         wishes: parseLines("wishes"),
-        playlist: collectPlaylist(),
-        memoryMap: collectMemoryMap(),
         quiz: collectQuiz(),
         carousel: collectCarousel(),
         movingGallery: collectMovingGallery(),
@@ -342,8 +330,6 @@ function renderGuiEditors() {
     currentSettings.polaroids ||= [];
     currentSettings.carousel ||= [];
     currentSettings.movingGallery ||= [];
-    currentSettings.playlist ||= [];
-    currentSettings.memoryMap ||= [];
     currentSettings.quiz ||= [];
     $("musicFileName").textContent = currentSettings.musicName || (currentSettings.musicSrc ? "Musik dashboard tersimpan." : "Belum ada musik upload.");
     renderLittleThingsEditor();
@@ -351,8 +337,6 @@ function renderGuiEditors() {
     renderPolaroidEditor();
     renderCarouselEditor();
     renderMovingGalleryEditor();
-    renderPlaylistEditor();
-    renderMemoryMapEditor();
     renderQuizEditor();
 }
 
@@ -462,32 +446,6 @@ function renderMovingGalleryEditor() {
     });
 }
 
-function renderPlaylistEditor() {
-    const target = $("playlistEditor");
-    target.innerHTML = "";
-    currentSettings.playlist.forEach((item, index) => {
-        const card = cardShell(`Lagu ${index + 1}`, () => {
-            currentSettings.playlist.splice(index, 1);
-            renderPlaylistEditor();
-        });
-        card.append(inputField("Judul", item.title, (value) => item.title = value), inputField("Deskripsi", item.text, (value) => item.text = value, true), inputField("Link", item.link, (value) => item.link = value));
-        target.appendChild(card);
-    });
-}
-
-function renderMemoryMapEditor() {
-    const target = $("memoryMapEditor");
-    target.innerHTML = "";
-    currentSettings.memoryMap.forEach((item, index) => {
-        const card = cardShell(`Tempat ${index + 1}`, () => {
-            currentSettings.memoryMap.splice(index, 1);
-            renderMemoryMapEditor();
-        });
-        card.append(inputField("Nama tempat", item.title, (value) => item.title = value), inputField("Cerita", item.text, (value) => item.text = value, true));
-        target.appendChild(card);
-    });
-}
-
 function renderQuizEditor() {
     const target = $("quizEditor");
     target.innerHTML = "";
@@ -507,8 +465,6 @@ function collectTimeline() { return currentSettings.detailedTimeline; }
 function collectPolaroids() { return currentSettings.polaroids; }
 function collectCarousel() { return currentSettings.carousel; }
 function collectMovingGallery() { return currentSettings.movingGallery; }
-function collectPlaylist() { return currentSettings.playlist; }
-function collectMemoryMap() { return currentSettings.memoryMap; }
 function collectQuiz() { return currentSettings.quiz; }
 
 function addLittleThing() {
@@ -534,16 +490,6 @@ function addCarouselItem() {
 function addMovingGalleryItem() {
     currentSettings.movingGallery.push({ src: "", title: "Foto baru", caption: "Tulis caption foto." });
     renderMovingGalleryEditor();
-}
-
-function addPlaylistItem() {
-    currentSettings.playlist.push({ title: "Lagu baru", text: "Tulis cerita lagunya.", link: "https://" });
-    renderPlaylistEditor();
-}
-
-function addMapItem() {
-    currentSettings.memoryMap.push({ title: "Tempat baru", text: "Tulis cerita tempatnya." });
-    renderMemoryMapEditor();
 }
 
 function addQuizItem() {

@@ -376,7 +376,7 @@ body.envelope-open .gate-countdown {
 
 /* MOVING GALLERY */
 .moving-gallery-section {
-    padding: 78px 0;
+    padding: 54px 0;
     overflow: hidden;
     text-align: center;
     background: linear-gradient(180deg, #ffffff, #eef8ff);
@@ -391,6 +391,18 @@ body.envelope-open .gate-countdown {
     display: grid;
     gap: 18px;
     width: 100%;
+}
+
+.gallery-line {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+    scrollbar-width: none;
+}
+
+.gallery-line::-webkit-scrollbar {
+    display: none;
 }
 
 .gallery-track {
@@ -412,8 +424,9 @@ body.envelope-open .gate-countdown {
     animation-duration: 44s;
 }
 
-.moving-gallery:hover .gallery-track,
-.moving-gallery:focus-within .gallery-track {
+.gallery-line:hover .gallery-track,
+.gallery-line:active .gallery-track,
+.gallery-line:focus-within .gallery-track {
     animation-play-state: paused;
 }
 
@@ -441,23 +454,6 @@ body.envelope-open .gate-countdown {
 .gallery-marquee-card:hover img,
 .gallery-marquee-card:focus-visible img {
     transform: scale(1.06);
-}
-
-.gallery-marquee-card span {
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    padding: 8px 10px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.82);
-    color: #023e8a;
-    font-size: 0.82rem;
-    font-weight: 700;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .gallery-marquee-card.missing-gallery-photo::before {
@@ -1296,26 +1292,34 @@ textarea:focus {
     }
 
     .letter {
-        width: 220px;
-        height: 148px;
-        padding: 14px 16px;
+        width: 224px;
+        height: auto;
+        min-height: 148px;
+        max-height: 178px;
+        padding: 14px 15px;
         border-radius: 9px;
+        overflow: hidden;
     }
 
     .letter h1 {
-        font-size: 1.55rem;
-        line-height: 1.12;
-        margin-bottom: 8px;
+        font-size: clamp(1.15rem, 7vw, 1.42rem);
+        line-height: 1.08;
+        margin-bottom: 7px;
+        overflow-wrap: anywhere;
     }
 
     .letter p {
-        font-size: 0.78rem;
-        line-height: 1.45;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 0.72rem;
+        line-height: 1.36;
         padding: 0;
     }
 
     .envelope-wrapper.is-opened .letter {
-        transform: translate(-50%, -76px);
+        transform: translate(-50%, -92px);
     }
 
     .click-instruction {
@@ -1441,7 +1445,7 @@ textarea:focus {
     }
 
     .moving-gallery-section {
-        padding: 58px 0;
+        padding: 42px 0;
     }
 
     .moving-gallery {
@@ -1455,13 +1459,6 @@ textarea:focus {
     .gallery-marquee-card {
         width: 150px;
         border-radius: 15px;
-    }
-
-    .gallery-marquee-card span {
-        left: 8px;
-        right: 8px;
-        bottom: 8px;
-        font-size: 0.74rem;
     }
 }
 
