@@ -1,101 +1,35 @@
-const SETTINGS_KEY = "cayaBirthdaySettings";
+﻿const SETTINGS_KEY = "cayaBirthdaySettings";
 const SETTINGS_VERSION_KEY = "cayaBirthdaySettingsVersion";
 const defaultSettings = {
-    unlockDate: "2026-05-06",
-    countdownKicker: "Menuju 06 Mei",
-    countdownTitle: "Countdown Ulang Tahunmu 🎂",
-    lockedMessage: "Isi web ini akan terbuka otomatis pada 06 Mei.",
-    unlockedMessage: "Waktunya buka amplop. Selamat ulang tahun, sayang! 💙",
-    heroTitle: "HBD Sayang! ☁️",
-    heroMessage: "Sejauh langit membentang, sebanyak itu doaku buat kamu. I love you!",
-    lockedInstruction: "Tunggu sampai 06 Mei ya...",
-    unlockedInstruction: "Tap amplopnya buat buka 💌",
+    unlockDate: "",
+    countdownKicker: "",
+    countdownTitle: "Memuat data...",
+    lockedMessage: "Mengambil pengaturan dari database...",
+    unlockedMessage: "",
+    heroTitle: "",
+    heroMessage: "",
+    lockedInstruction: "Memuat data...",
+    unlockedInstruction: "",
     musicSrc: "",
     musicName: "",
-    loveTitle: "Kenapa Aku Sayang Kamu 💙",
-    reasons: [
-        "Karena senyummu bikin tenang",
-        "Karena kamu selalu ngerti aku",
-        "Karena hadirmu bikin hidup lebih indah",
-        "Karena kamu rumah terbaikku"
-    ],
-    polaroids: [
-        {
-            image: "awal_kenal.jpg",
-            title: "Maret 2023",
-            alt: "Awal Kenal",
-            caption: "Waktu pertama kali kita ngobrol. Langit hari itu rasanya cerah banget, persis perasaan aku."
-        },
-        {
-            image: "jadian.jpg",
-            title: "Agustus 2023",
-            alt: "Jadian",
-            caption: "Hari paling bersejarah! Akhirnya kamu nerima aku jadi bagian dari hidupmu."
-        }
-    ],
-    detailedTimeline: [
-        {
-            title: "First Date 🎬",
-            text: "Nonton bioskop bareng pertama kali. Masih malu-malu banget, deg-degan parah rasanya pengen waktu berhenti aja.",
-            date: "September 2023"
-        },
-        {
-            title: "Kehujanan Bareng 🌧️",
-            text: "Lagi asik motoran eh hujan deres. Neduh di pinggir jalan sambil minum kopi anget, momen sederhana tapi berbekas banget.",
-            date: "November 2023"
-        },
-        {
-            title: "Tahun Baru Pertama 🎆",
-            text: "Lewatin pergantian tahun berdua. Liat kembang api sambil janji bakal terus bareng-bareng di tahun-tahun berikutnya.",
-            date: "Desember 2023"
-        }
-    ],
-    littleThings: [
-        { label: "Lagu favorit", value: "Tulis lagu favoritmu di sini" },
-        { label: "Makanan favorit", value: "Tulis makanan favoritmu di sini" },
-        { label: "Kebiasaan lucu", value: "Tulis kebiasaan kecil yang paling kamu inget" },
-        { label: "Hal yang aku kagumi", value: "Cara kamu tetap kuat dan baik hati" }
-    ],
-    wishes: [
-        "Semoga kamu selalu sehat dan hatimu sering merasa tenang.",
-        "Semoga semua mimpi yang kamu simpan pelan-pelan jadi nyata.",
-        "Semoga hari-harimu dipenuhi orang baik dan kabar baik.",
-        "Semoga kamu selalu ingat kalau kamu sangat berharga.",
-        "Semoga langkahmu ringan, rezekimu luas, dan senyummu sering muncul."
-    ],
-    playlist: [
-        { title: "Lagu waktu kangen", text: "Ganti judul ini dengan lagu yang paling sering ngingetin kamu sama dia.", link: "https://open.spotify.com" },
-        { title: "Lagu perjalanan", text: "Cocok buat lagu yang pernah kalian dengar bareng di jalan.", link: "https://www.youtube.com" },
-        { title: "Lagu ulang tahun", text: "Simpan lagu paling manis buat penutup hari spesialnya.", link: "https://open.spotify.com" }
-    ],
-    memoryMap: [
-        { title: "Tempat pertama ketemu", text: "Tulis tempatnya di sini, biar jadi penanda awal cerita." },
-        { title: "Tempat first date", text: "Tempat yang bikin deg-degan tapi sekarang jadi kenangan lucu." },
-        { title: "Tempat makan favorit", text: "Tempat sederhana yang rasanya jadi spesial karena bareng kamu." }
-    ],
-    quiz: [
-        { question: "Apa hadiah paling manis dari hubungan ini?", options: ["Saling punya rumah pulang", "Menang debat", "Jarang chat"], answer: 0 },
-        { question: "Kalau lagi kangen, yang paling cocok dilakukan apa?", options: ["Ngambek diam-diam", "Bilang baik-baik", "Hilang tanpa kabar"], answer: 1 },
-        { question: "Berapa persen sayang yang bisa dihitung sistem?", options: ["100%", "999999%", "Cuma sedikit"], answer: 1 }
-    ],
-    carousel: [
-        { src: "awal_kenal.jpg", title: "Awal Kenal", caption: "Momen pertama yang jadi awal semua cerita." },
-        { src: "jadian.jpg", title: "Jadian", caption: "Hari yang bikin cerita ini terasa lebih serius dan hangat." },
-        { src: "foto_favorit.jpg", title: "Foto Favorit", caption: "Ganti file ini dengan foto favorit kalian berdua." }
-    ],
-    letterTitle: "Surat Untukmu 💙",
-    letterParagraphs: [
-        "Selamat ulang tahun, sayang. Semoga umur barumu selalu dipenuhi hal-hal baik, langkah yang dimudahkan, hati yang dikuatkan, dan mimpi-mimpi yang pelan-pelan jadi nyata.",
-        "Terima kasih sudah hadir dan jadi bagian paling hangat dalam hari-hariku. Aku sayang kamu, bukan cuma di hari spesial ini, tapi di hari biasa, hari capek, hari lucu, dan hari-hari kecil yang sering lewat diam-diam.",
-        "Semoga kamu selalu ingat: kamu berharga, kamu dicintai, dan aku bangga punya kamu."
-    ],
-    surpriseTitle: "Happy Birthday, Sayang 🎂",
-    surpriseText: "Semoga hari ini jadi salah satu hari yang kamu inget dengan senyum. Aku sayang kamu lebih dari yang bisa ditulis di web ini.",
-    surpriseStrong: "Hadiah utamanya: aku akan terus milih kamu, hari ini dan seterusnya. 💙",
-    curhatTitle: "Pesan Untukmu 💌",
-    curhatPrompt: "Kalo ada yang mau diungkapin, tulis di bawah ya sayang..."
+    loveTitle: "",
+    reasons: [],
+    polaroids: [],
+    detailedTimeline: [],
+    littleThings: [],
+    wishes: [],
+    playlist: [],
+    memoryMap: [],
+    quiz: [],
+    carousel: [],
+    letterTitle: "",
+    letterParagraphs: [],
+    surpriseTitle: "",
+    surpriseText: "",
+    surpriseStrong: "",
+    curhatTitle: "",
+    curhatPrompt: ""
 };
-
 function mergeSettings(base, saved) {
     return { ...base, ...(saved || {}) };
 }
@@ -104,15 +38,9 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function loadSettings() {
-    try {
-        return mergeSettings(defaultSettings, JSON.parse(localStorage.getItem(SETTINGS_KEY)));
-    } catch (error) {
-        return defaultSettings;
-    }
-}
-
-let settings = loadSettings();
+let settings = { ...defaultSettings };
+let settingsReady = false;
+let countdownTimer = null;
 
 async function loadRemoteSettings() {
     // Retry singkat untuk perangkat yang koneksi mobile-nya tidak stabil.
@@ -125,16 +53,32 @@ async function loadRemoteSettings() {
 
             const remoteSettings = await response.json();
             settings = mergeSettings(defaultSettings, remoteSettings);
-            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            settingsReady = true;
             return;
         } catch (error) {
             if (attempt === 3) {
-                settings = loadSettings();
+                settingsReady = false;
+                showSettingsError(error.message || "Database tidak bisa dibaca.");
                 return;
             }
             await sleep(300 * attempt);
         }
     }
+}
+
+function showSettingsError(message) {
+    document.body.classList.remove("locked");
+    document.body.classList.remove("db-ready");
+    document.body.classList.add("content-locked");
+    setText(".gate-countdown .section-kicker", "DATABASE");
+    setText(".gate-countdown h2", "Data belum terbaca");
+    setText("#countdownMessage", `Tidak bisa membaca settings dari Cloudflare D1. ${message}`);
+    setText(".click-instruction", "Cek dashboard dan binding D1 dulu ya.");
+    ["days", "hours", "minutes", "seconds"].forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = "--";
+    });
+    if (envelope) envelope.classList.add("is-waiting");
 }
 
 async function syncSettingsVersion() {
@@ -198,16 +142,23 @@ function getUnlockDate() {
         return new Date(year, month - 1, day, 0, 0, 0, 0);
     }
 
-    return new Date(2026, 4, 6, 0, 0, 0, 0);
+    return null;
 }
 
 function isBirthdayUnlocked() {
-    return new Date() >= getUnlockDate();
+    const unlockDate = getUnlockDate();
+    return Boolean(settingsReady && unlockDate && new Date() >= unlockDate);
 }
 
 function updateCountdown() {
+    if (!settingsReady) return;
+
     const now = new Date();
     const target = getUnlockDate();
+    if (!target) {
+        showSettingsError("Tanggal unlockDate kosong atau formatnya salah.");
+        return;
+    }
     const distance = target - now;
     const message = document.getElementById("countdownMessage");
 
@@ -237,15 +188,15 @@ function updateCountdown() {
 function lockEnvelope() {
     document.body.classList.add("content-locked");
     document.body.classList.add("locked");
-    envelope.classList.add("is-waiting");
-    clickInstruction.textContent = settings.lockedInstruction;
+    if (envelope) envelope.classList.add("is-waiting");
+    if (clickInstruction) clickInstruction.textContent = settings.lockedInstruction;
 }
 
 function unlockEnvelope() {
     document.body.classList.remove("content-locked");
     document.body.classList.remove("locked");
-    envelope.classList.remove("is-waiting");
-    clickInstruction.textContent = settings.unlockedInstruction;
+    if (envelope) envelope.classList.remove("is-waiting");
+    if (clickInstruction) clickInstruction.textContent = settings.unlockedInstruction;
 }
 
 function setText(selector, text) {
@@ -491,9 +442,14 @@ function goToSection(selector) {
 }
 
 function bukaSurat() {
+    if (!settingsReady) {
+        showSettingsError("Data belum siap.");
+        return;
+    }
+
     if (!isBirthdayUnlocked()) {
         createHeart();
-        alert("Belum waktunya dibuka. Tunggu sampai 06 Mei ya.");
+        alert(settings.lockedInstruction || "Belum waktunya dibuka.");
         return;
     }
 
@@ -553,6 +509,13 @@ function renderQuiz() {
 
     if (!questionElement || !optionsElement || !resultElement) return;
 
+    if (!quizQuestions.length) {
+        questionElement.textContent = "";
+        optionsElement.innerHTML = "";
+        resultElement.textContent = "";
+        return;
+    }
+
     if (currentQuizIndex >= quizQuestions.length) {
         questionElement.textContent = "Quiz selesai!";
         optionsElement.innerHTML = "";
@@ -597,7 +560,7 @@ function renderCarousel() {
     const title = document.getElementById("carouselTitle");
     const caption = document.getElementById("carouselCaption");
 
-    if (!image || !title || !caption) return;
+    if (!image || !title || !caption || !photo) return;
 
     image.style.display = "block";
     image.parentElement.classList.remove("missing-carousel-photo");
@@ -716,12 +679,16 @@ document.addEventListener("keydown", (event) => {
 async function initPage() {
     await syncSettingsVersion();
     await loadRemoteSettings();
+    if (!settingsReady) return;
     applySettings();
+    document.body.classList.add("db-ready");
     updateCountdown();
     renderLastMessage();
     renderQuiz();
     renderCarousel();
-    setInterval(updateCountdown, 1000);
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(updateCountdown, 1000);
 }
 
 initPage();
+

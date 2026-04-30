@@ -29,6 +29,10 @@ body.content-locked main {
     display: none;
 }
 
+body:not(.db-ready) main {
+    display: none;
+}
+
 body.envelope-open .gate-countdown {
     display: none;
 }

@@ -122,25 +122,15 @@ function logoutDashboard() {
     $("loginStatus").textContent = "Kamu sudah logout.";
 }
 
-function getLocalSettings() {
-    try {
-        return { ...defaultSettings, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
-    } catch (error) {
-        return defaultSettings;
-    }
-}
-
 async function getSavedSettings() {
-    try {
-        const response = await fetch("/api/settings", { cache: "no-store" });
-        if (!response.ok) throw new Error("API belum aktif");
-
-        const data = await response.json();
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
-        return { ...defaultSettings, ...data };
-    } catch (error) {
-        return getLocalSettings();
+    const response = await fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) {
+        const result = await response.json().catch(() => ({ error: "API belum aktif." }));
+        throw new Error(result.error || "API belum aktif.");
     }
+
+    const data = await response.json();
+    return { ...defaultSettings, ...data };
 }
 
 function pretty(value) {
@@ -168,7 +158,17 @@ function parseJson(id) {
 }
 
 async function fillForm() {
-    const data = await getSavedSettings();
+    let data;
+    try {
+        data = await getSavedSettings();
+    } catch (error) {
+        data = structuredClone(defaultSettings);
+        const status = $("statusText");
+        if (status) {
+            status.textContent = `${error.message} Form memakai template awal sampai kamu simpan ke D1.`;
+            status.style.color = "#b91c1c";
+        }
+    }
     currentSettings = structuredClone(data);
 
     Object.entries(data).forEach(([key, value]) => {
@@ -248,7 +248,6 @@ async function saveSettings() {
             throw new Error(`API ${response.status}: ${message}`);
         }
 
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
         status.textContent = "Tersimpan ke Cloudflare D1. Refresh index.html untuk melihat perubahan.";
         status.style.color = "#047857";
     } catch (error) {
