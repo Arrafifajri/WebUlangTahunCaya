@@ -6,6 +6,7 @@
 
 html {
     scroll-behavior: smooth;
+    color-scheme: light;
 }
 
 body {
@@ -16,6 +17,7 @@ body {
         linear-gradient(180deg, #eef8ff 0%, #f8fcff 42%, #edf7ff 100%);
     color: #17324d;
     font-family: Inter, sans-serif;
+    color-scheme: light;
 }
 
 body.dashboard-locked {
@@ -249,6 +251,7 @@ textarea {
     font-weight: 500;
     line-height: 1.55;
     outline: none;
+    color-scheme: light;
 }
 
 input {
