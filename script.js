@@ -52,6 +52,7 @@ let skyAnimationStarted = false;
 let skyRevealStarted = false;
 let motionEngineStarted = false;
 let galleryRenderSeed = Date.now();
+let galleryMotionVersion = 0;
 
 function cleanupLegacySettingsCache() {
     try {
@@ -239,22 +240,34 @@ function initMotionEngine() {
 
     const motion = {
         startedAt: performance.now(),
-        gallery: new WeakMap()
+        gallery: new WeakMap(),
+        galleryTracks: [],
+        galleryVersion: -1
     };
 
-    function getGalleryState(track) {
+    function refreshGalleryTracks() {
+        if (motion.galleryVersion === galleryMotionVersion) return;
+        motion.galleryTracks = Array.from(document.querySelectorAll(".gallery-line")).map((line) => ({
+            line,
+            track: line.querySelector(".gallery-track")
+        })).filter((item) => item.track);
+        motion.galleryVersion = galleryMotionVersion;
+    }
+
+    function getGalleryState(track, time) {
         let state = motion.gallery.get(track);
         const distance = Math.max(0, track.scrollWidth / 2);
         const direction = track.classList.contains("gallery-track-left") ? -1 : 1;
         const speedMultiplier = Math.min(2.5, Math.max(0.35, Number(settings.movingGallerySpeed) || 1));
-        const speed = (track.classList.contains("gallery-track-slow") ? 0.52 : 0.76) * speedMultiplier;
+        const speed = (track.classList.contains("gallery-track-slow") ? 30 : 44) * speedMultiplier;
 
         if (!state || Math.abs(state.distance - distance) > 2 || Math.abs(state.speed - speed) > 0.01) {
             state = {
                 x: direction > 0 ? -distance : 0,
                 distance,
                 direction,
-                speed
+                speed,
+                lastTime: time
             };
             motion.gallery.set(track, state);
         }
@@ -262,16 +275,20 @@ function initMotionEngine() {
         return state;
     }
 
-    function animateGallery() {
-        document.querySelectorAll(".gallery-line").forEach((line) => {
-            const track = line.querySelector(".gallery-track");
-            if (!track) return;
+    function animateGallery(time) {
+        refreshGalleryTracks();
+        motion.galleryTracks.forEach(({ line, track }) => {
+            const rect = line.getBoundingClientRect();
+            const isNearViewport = rect.bottom > -160 && rect.top < window.innerHeight + 160;
+            if (!isNearViewport) return;
 
-            const state = getGalleryState(track);
+            const state = getGalleryState(track, time);
             if (!state.distance) return;
+            const elapsed = Math.min(32, Math.max(0, time - (state.lastTime || time))) / 1000;
+            state.lastTime = time;
 
-            if (!line.classList.contains("is-dragging") && !line.matches(":hover")) {
-                state.x += state.direction * state.speed;
+            if (line.dataset.motionPaused !== "true") {
+                state.x += state.direction * state.speed * elapsed;
                 if (state.direction > 0 && state.x >= 0) state.x = -state.distance;
                 if (state.direction < 0 && Math.abs(state.x) >= state.distance) state.x = 0;
             }
@@ -318,7 +335,7 @@ function initMotionEngine() {
 
     function frame(time) {
         animateHero(time);
-        animateGallery();
+        animateGallery(time);
         animateSections(time);
         requestAnimationFrame(frame);
     }
@@ -326,6 +343,7 @@ function initMotionEngine() {
     requestAnimationFrame(frame);
     window.addEventListener("resize", () => {
         motion.gallery = new WeakMap();
+        galleryMotionVersion++;
         updateGalleryLayoutVars();
     });
 }
@@ -647,6 +665,23 @@ function shuffleGalleryPhotos(photos, lineIndex) {
     return shuffled;
 }
 
+function buildGalleryLinePhotos(photos, lineIndex) {
+    const shuffled = shuffleGalleryPhotos(photos, lineIndex);
+    const width = window.innerWidth || document.documentElement.clientWidth || 360;
+    const isMobile = width < 768;
+    const maxUnique = isMobile ? 10 : 14;
+    const cardWidth = isMobile ? 146 : 204;
+    const minNeeded = Math.ceil(width / cardWidth) + 4;
+    const targetCount = Math.max(minNeeded, Math.min(shuffled.length, maxUnique));
+    const base = [];
+
+    for (let index = 0; index < targetCount; index++) {
+        base.push(shuffled[index % shuffled.length]);
+    }
+
+    return [...base, ...base];
+}
+
 function updateGalleryLayoutVars() {
     const gallery = document.getElementById("movingGallery");
     if (!gallery) return;
@@ -669,6 +704,7 @@ function renderMovingGallery() {
 
     updateGalleryLayoutVars();
     galleryRenderSeed = Date.now();
+    galleryMotionVersion++;
     const tracks = gallery.querySelectorAll(".gallery-track");
     const photos = getGalleryPhotos();
     tracks.forEach((track) => {
@@ -682,14 +718,9 @@ function renderMovingGallery() {
 
     gallery.classList.remove("is-empty");
     tracks.forEach((track, trackIndex) => {
-        const randomizedPhotos = shuffleGalleryPhotos(photos, trackIndex);
-        const rowPhotos = [];
-        const copies = Math.max(randomizedPhotos.length * 4, 18);
-        for (let i = 0; i < copies; i++) {
-            rowPhotos.push(randomizedPhotos[i % randomizedPhotos.length]);
-        }
+        const rowPhotos = buildGalleryLinePhotos(photos, trackIndex);
 
-        rowPhotos.forEach((photo) => {
+        rowPhotos.forEach((photo, photoIndex) => {
             const button = document.createElement("button");
             button.className = "gallery-marquee-card";
             button.type = "button";
@@ -698,7 +729,10 @@ function renderMovingGallery() {
             const image = document.createElement("img");
             image.src = photo.src;
             image.alt = photo.title;
-            image.loading = "lazy";
+            image.loading = photoIndex < 6 ? "eager" : "lazy";
+            image.decoding = "async";
+            image.draggable = false;
+            if (photoIndex < 4) image.fetchPriority = "high";
             image.onerror = () => button.classList.add("missing-gallery-photo");
 
             button.append(image);
@@ -712,6 +746,7 @@ function enableGalleryDrag(gallery) {
     gallery.querySelectorAll(".gallery-line").forEach((line) => {
         if (line.dataset.dragReady === "true") return;
         line.dataset.dragReady = "true";
+        line.dataset.motionPaused = "false";
 
         let startX = 0;
         let startY = 0;
@@ -726,6 +761,7 @@ function enableGalleryDrag(gallery) {
             isDragging = true;
             moved = false;
             line.classList.add("is-dragging");
+            line.dataset.motionPaused = "true";
         });
 
         line.addEventListener("pointermove", (event) => {
@@ -756,11 +792,18 @@ function enableGalleryDrag(gallery) {
         const stopDragging = () => {
             line.classList.remove("is-dragging");
             isDragging = false;
+            line.dataset.motionPaused = "false";
             setTimeout(() => {
                 moved = false;
             }, 0);
         };
 
+        line.addEventListener("mouseenter", () => {
+            line.dataset.motionPaused = "true";
+        });
+        line.addEventListener("mouseleave", () => {
+            if (!isDragging) line.dataset.motionPaused = "false";
+        });
         line.addEventListener("pointerup", stopDragging);
         line.addEventListener("pointercancel", stopDragging);
         line.addEventListener("click", (event) => {

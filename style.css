@@ -744,6 +744,7 @@ main > section:nth-child(even)::after {
         radial-gradient(circle at 16% 40%, rgba(135,206,235,0.18), transparent 18rem);
     width: 100%;
     margin-left: 0;
+    contain: layout paint;
 }
 
 .moving-gallery-section h2 {
@@ -765,6 +766,10 @@ main > section:nth-child(even)::after {
     overscroll-behavior-inline: contain;
     cursor: grab;
     scrollbar-width: none;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    content-visibility: auto;
+    contain-intrinsic-size: 180px;
 }
 
 .gallery-line.is-dragging {
@@ -780,6 +785,8 @@ main > section:nth-child(even)::after {
     width: max-content;
     gap: var(--gallery-gap, 14px);
     will-change: transform;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
 }
 
 .gallery-track-right {
@@ -801,6 +808,13 @@ main > section:nth-child(even)::after {
     animation-play-state: paused;
 }
 
+body.js-motion .gallery-line:hover .gallery-track,
+body.js-motion .gallery-line:active .gallery-track,
+body.js-motion .gallery-line.is-dragging .gallery-track,
+body.js-motion .gallery-line:focus-within .gallery-track {
+    animation-play-state: running;
+}
+
 .gallery-marquee-card {
     position: relative;
     flex: 0 0 auto;
@@ -817,6 +831,8 @@ main > section:nth-child(even)::after {
     user-select: none;
     -webkit-user-drag: none;
     transform: translateZ(0);
+    contain: layout paint;
+    backface-visibility: hidden;
     transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
 }
 
@@ -827,6 +843,8 @@ main > section:nth-child(even)::after {
     object-fit: contain;
     pointer-events: none;
     transition: transform 0.35s ease;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .gallery-marquee-card:hover img,

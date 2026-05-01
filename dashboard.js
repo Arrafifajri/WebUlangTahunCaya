@@ -154,6 +154,133 @@ function parseJson(id) {
     }
 }
 
+function formatPhotoDate(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    const months = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    return `${String(date.getDate()).padStart(2, "0")} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function dateFromCompactParts(year, month, day) {
+    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function extractDateFromText(value) {
+    const text = decodeURIComponent(String(value || "")).toLowerCase();
+    let match = /(?:img|screenshot|photo|vid|wa|pict)?[-_\s]*(20\d{2})[-_\s]?([01]\d)[-_\s]?([0-3]\d)/i.exec(text);
+    if (match) return dateFromCompactParts(match[1], match[2], match[3]);
+
+    match = /([0-3]\d)[-_\s.]([01]\d)[-_\s.](20\d{2})/.exec(text);
+    if (match) return dateFromCompactParts(match[3], match[2], match[1]);
+
+    return null;
+}
+
+function readString(dataView, offset, length) {
+    let value = "";
+    for (let index = 0; index < length; index++) {
+        const code = dataView.getUint8(offset + index);
+        if (code) value += String.fromCharCode(code);
+    }
+    return value;
+}
+
+function parseExifDate(value) {
+    const match = /^(\d{4}):(\d{2}):(\d{2})/.exec(String(value || "").trim());
+    return match ? dateFromCompactParts(match[1], match[2], match[3]) : null;
+}
+
+function readExifDateFromArrayBuffer(buffer) {
+    const view = new DataView(buffer);
+    if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) return null;
+
+    let offset = 2;
+    while (offset + 4 < view.byteLength) {
+        if (view.getUint8(offset) !== 0xff) break;
+
+        const marker = view.getUint8(offset + 1);
+        const length = view.getUint16(offset + 2, false);
+        if (marker === 0xe1 && readString(view, offset + 4, 6) === "Exif\0\0") {
+            return readExifDateFromTiff(view, offset + 10);
+        }
+
+        offset += 2 + length;
+    }
+
+    return null;
+}
+
+function readExifDateFromTiff(view, tiffOffset) {
+    const endian = readString(view, tiffOffset, 2);
+    const littleEndian = endian === "II";
+    if (!littleEndian && endian !== "MM") return null;
+
+    const firstIfdOffset = view.getUint32(tiffOffset + 4, littleEndian);
+    const tags = readIfdTags(view, tiffOffset, tiffOffset + firstIfdOffset, littleEndian);
+    const directDate = tags.get(0x9003) || tags.get(0x9004) || tags.get(0x0132);
+    if (directDate) return parseExifDate(directDate);
+
+    const exifOffset = tags.get(0x8769);
+    if (!exifOffset) return null;
+
+    const exifTags = readIfdTags(view, tiffOffset, tiffOffset + exifOffset, littleEndian);
+    return parseExifDate(exifTags.get(0x9003) || exifTags.get(0x9004) || exifTags.get(0x0132));
+}
+
+function readIfdTags(view, tiffOffset, ifdOffset, littleEndian) {
+    const tags = new Map();
+    if (ifdOffset + 2 > view.byteLength) return tags;
+
+    const entries = view.getUint16(ifdOffset, littleEndian);
+    for (let index = 0; index < entries; index++) {
+        const entryOffset = ifdOffset + 2 + index * 12;
+        if (entryOffset + 12 > view.byteLength) break;
+
+        const tag = view.getUint16(entryOffset, littleEndian);
+        const type = view.getUint16(entryOffset + 2, littleEndian);
+        const count = view.getUint32(entryOffset + 4, littleEndian);
+        const valueOffset = entryOffset + 8;
+
+        if (type === 2) {
+            const stringOffset = count <= 4 ? valueOffset : tiffOffset + view.getUint32(valueOffset, littleEndian);
+            if (stringOffset > 0 && stringOffset + count <= view.byteLength) {
+                tags.set(tag, readString(view, stringOffset, count).trim());
+            }
+        } else if (type === 4 && count === 1) {
+            tags.set(tag, view.getUint32(valueOffset, littleEndian));
+        }
+    }
+
+    return tags;
+}
+
+async function getPhotoDateTitle(file) {
+    try {
+        const buffer = await file.arrayBuffer();
+        const exifDate = readExifDateFromArrayBuffer(buffer);
+        if (exifDate) return formatPhotoDate(exifDate);
+    } catch (error) {
+        // Tidak semua gambar punya EXIF, jadi lanjut ke fallback.
+    }
+
+    const filenameDate = extractDateFromText(file.name);
+    if (filenameDate) return formatPhotoDate(filenameDate);
+
+    return formatPhotoDate(new Date(file.lastModified || Date.now()));
+}
+
+function normalizeMovingGalleryTitle(item) {
+    const detectedDate = extractDateFromText(`${item.title || ""} ${item.src || ""}`);
+    if (detectedDate) {
+        item.title = formatPhotoDate(detectedDate);
+    }
+    item.caption ||= "";
+    return item;
+}
+
 async function fillForm() {
     let data;
     try {
@@ -167,8 +294,9 @@ async function fillForm() {
         }
     }
     currentSettings = structuredClone(data);
+    currentSettings.movingGallery = (currentSettings.movingGallery || []).map(normalizeMovingGalleryTitle);
 
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(currentSettings).forEach(([key, value]) => {
         const field = $(key);
         if (!field) return;
 
@@ -372,12 +500,14 @@ async function uploadMovingGalleryImage(event, index) {
         $("statusText").textContent = `Mengupload ${file.name} ke Cloudflare KV...`;
         $("statusText").style.color = "#075985";
 
+        const title = await getPhotoDateTitle(file);
         const dataUrl = await compressImage(file, 1200, 0.78);
         const media = await uploadMediaToKv(dataUrl, file.name, "gallery");
         const gallery = currentSettings.movingGallery;
 
         gallery[index] = {
-            ...(gallery[index] || { title: `Foto ${index + 1}`, caption: "" }),
+            ...(gallery[index] || { title, caption: "" }),
+            title,
             src: media.src
         };
 
@@ -401,9 +531,9 @@ async function uploadMovingGalleryImages(event) {
     try {
         for (const file of files) {
             $("statusText").textContent = `Upload ${uploaded + 1}/${files.length}: ${file.name}`;
+            const title = await getPhotoDateTitle(file);
             const dataUrl = await compressImage(file, 1100, 0.74);
             const media = await uploadMediaToKv(dataUrl, file.name, "gallery");
-            const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || `Foto ${currentSettings.movingGallery.length + 1}`;
             currentSettings.movingGallery.push({
                 src: media.src,
                 title,
@@ -560,7 +690,7 @@ function renderMovingGalleryEditor() {
         const meta = document.createElement("div");
         meta.className = "gallery-thumb-meta";
         meta.append(
-            inputField("Judul", item.title, (value) => item.title = value),
+            inputField("Tanggal foto", item.title, (value) => item.title = value),
             inputField("Caption", item.caption, (value) => item.caption = value, true)
         );
 
