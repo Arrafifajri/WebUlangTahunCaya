@@ -481,6 +481,10 @@ let quizQuestions = settings.quiz;
 let carouselPhotos = settings.carousel;
 let currentQuizIndex = 0;
 let quizScore = 0;
+let quizSessionId = "";
+let quizStartedAt = null;
+let quizAnswers = [];
+let quizSubmitted = false;
 let carouselIndex = 0;
 
 if (window.AOS) {
@@ -1083,6 +1087,7 @@ function applySettings() {
     renderVideoSection();
     wishes = settings.wishes;
     quizQuestions = settings.quiz;
+    resetQuizSession();
     carouselPhotos = settings.carousel;
 }
 
@@ -1255,6 +1260,48 @@ function runLoveMeter() {
     }, 450);
 }
 
+function createQuizSessionId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `quiz-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function resetQuizSession() {
+    currentQuizIndex = 0;
+    quizScore = 0;
+    quizStartedAt = null;
+    quizAnswers = [];
+    quizSubmitted = false;
+    quizSessionId = createQuizSessionId();
+}
+
+async function submitQuizResult() {
+    if (quizSubmitted || !quizQuestions.length || !quizAnswers.length) return;
+    quizSubmitted = true;
+
+    const finishedAt = Date.now();
+    const payload = {
+        sessionId: quizSessionId || createQuizSessionId(),
+        startedAt: new Date(quizStartedAt || finishedAt).toISOString(),
+        finishedAt: new Date(finishedAt).toISOString(),
+        durationMs: Math.max(0, finishedAt - (quizStartedAt || finishedAt)),
+        score: quizScore,
+        total: quizQuestions.length,
+        answers: quizAnswers
+    };
+
+    try {
+        await fetch("/api/quiz-results", {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.warn("Hasil quiz belum bisa dikirim ke monitoring.", error);
+    }
+}
+
 function renderQuiz() {
     const questionElement = document.getElementById("quizQuestion");
     const optionsElement = document.getElementById("quizOptions");
@@ -1295,8 +1342,25 @@ function answerQuiz(index) {
 
     const currentQuestion = quizQuestions[currentQuizIndex];
     const resultElement = document.getElementById("quizResult");
+    if (!currentQuestion || !Array.isArray(currentQuestion.options)) return;
 
-    if (index === currentQuestion.answer) {
+    if (!quizStartedAt) quizStartedAt = Date.now();
+    const correctIndex = Number(currentQuestion.answer) || 0;
+    const selectedOption = currentQuestion.options[index] || "";
+    const correctOption = currentQuestion.options[correctIndex] || "";
+    const isCorrect = index === correctIndex;
+
+    quizAnswers.push({
+        question: currentQuestion.question || `Pertanyaan ${currentQuizIndex + 1}`,
+        selectedIndex: index,
+        selectedOption,
+        correctIndex,
+        correctOption,
+        isCorrect,
+        answeredAt: new Date().toISOString()
+    });
+
+    if (isCorrect) {
         quizScore++;
         resultElement.textContent = "Benar. Kamu memang paham cerita kita.";
     } else {
@@ -1304,6 +1368,9 @@ function answerQuiz(index) {
     }
 
     currentQuizIndex++;
+    if (currentQuizIndex >= quizQuestions.length) {
+        submitQuizResult();
+    }
     setTimeout(renderQuiz, 900);
 }
 

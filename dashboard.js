@@ -106,6 +106,7 @@ async function loginDashboard(event) {
         document.body.classList.remove("dashboard-locked");
         status.textContent = "";
         await fillForm();
+        await loadQuizResults();
     } catch (error) {
         status.textContent = error.message;
     }
@@ -776,6 +777,144 @@ function addQuizItem() {
     renderQuizEditor();
 }
 
+function formatMonitorDate(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Waktu tidak terbaca";
+
+    return new Intl.DateTimeFormat("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short"
+    }).format(date);
+}
+
+function formatDuration(ms) {
+    const totalSeconds = Math.max(0, Math.round((Number(ms) || 0) / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes <= 0) return `${seconds} detik`;
+    return `${minutes} menit ${seconds} detik`;
+}
+
+function createTextElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    element.textContent = text;
+    return element;
+}
+
+function renderMonitorSummary(results) {
+    const target = $("quizMonitorSummary");
+    if (!target) return;
+
+    target.innerHTML = "";
+    const totalSessions = results.length;
+    const averageScore = totalSessions
+        ? Math.round(results.reduce((sum, item) => sum + (item.total ? item.score / item.total : 0), 0) / totalSessions * 100)
+        : 0;
+    const bestScore = results.reduce((best, item) => {
+        const percent = item.total ? Math.round(item.score / item.total * 100) : 0;
+        return Math.max(best, percent);
+    }, 0);
+    const averageDuration = totalSessions
+        ? Math.round(results.reduce((sum, item) => sum + (Number(item.durationMs) || 0), 0) / totalSessions)
+        : 0;
+
+    [
+        ["Sesi masuk", String(totalSessions)],
+        ["Rata-rata skor", `${averageScore}%`],
+        ["Skor terbaik", `${bestScore}%`],
+        ["Rata-rata waktu", formatDuration(averageDuration)]
+    ].forEach(([label, value]) => {
+        const card = document.createElement("article");
+        card.className = "monitor-stat";
+        card.append(createTextElement("span", "", label), createTextElement("strong", "", value));
+        target.appendChild(card);
+    });
+}
+
+function renderQuizResults(results) {
+    renderMonitorSummary(results);
+
+    const target = $("quizResultsMonitor");
+    if (!target) return;
+    target.innerHTML = "";
+
+    if (!results.length) {
+        target.appendChild(createTextElement("p", "empty-monitor", "Belum ada data quiz yang masuk."));
+        return;
+    }
+
+    results.forEach((result, resultIndex) => {
+        const percent = result.total ? Math.round(result.score / result.total * 100) : 0;
+        const card = document.createElement("article");
+        card.className = "quiz-result-card";
+
+        const head = document.createElement("div");
+        head.className = "quiz-result-head";
+        const titleBlock = document.createElement("div");
+        titleBlock.append(
+            createTextElement("h3", "", `Sesi ${resultIndex + 1}`),
+            createTextElement("p", "", formatMonitorDate(result.createdAt))
+        );
+        const score = createTextElement("strong", "quiz-score-badge", `${result.score}/${result.total} (${percent}%)`);
+        head.append(titleBlock, score);
+
+        const meta = document.createElement("div");
+        meta.className = "quiz-result-meta";
+        meta.append(
+            createTextElement("span", "", `Durasi: ${formatDuration(result.durationMs)}`),
+            createTextElement("span", "", `Session: ${String(result.sessionId || "").slice(0, 12)}`),
+            createTextElement("span", "", result.userAgent ? "Device terbaca" : "Device kosong")
+        );
+
+        const answers = document.createElement("div");
+        answers.className = "quiz-answer-list";
+        (result.answers || []).forEach((answer, answerIndex) => {
+            const row = document.createElement("div");
+            row.className = `quiz-answer-row ${answer.isCorrect ? "is-correct" : "is-wrong"}`;
+
+            const question = createTextElement("p", "quiz-answer-question", `${answerIndex + 1}. ${answer.question || "Pertanyaan kosong"}`);
+            const selected = createTextElement("span", "", `Jawaban dia: ${answer.selectedOption || "-"}`);
+            const correct = createTextElement("span", "", `Kunci: ${answer.correctOption || "-"}`);
+            row.append(question, selected, correct);
+            answers.appendChild(row);
+        });
+
+        card.append(head, meta, answers);
+        target.appendChild(card);
+    });
+}
+
+async function loadQuizResults() {
+    const target = $("quizResultsMonitor");
+    const password = getAdminPassword();
+    if (!target || !password) return;
+
+    try {
+        target.innerHTML = "";
+        target.appendChild(createTextElement("p", "empty-monitor", "Mengambil data monitoring..."));
+
+        const response = await fetch(`/api/quiz-results?t=${Date.now()}`, {
+            headers: {
+                "x-admin-password": password
+            },
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            const result = await response.json().catch(() => ({ error: "Gagal membaca monitoring quiz." }));
+            throw new Error(`${result.error || "Gagal membaca monitoring quiz."}${result.detail ? ` ${result.detail}` : ""}`);
+        }
+
+        const data = await response.json();
+        renderQuizResults(Array.isArray(data.results) ? data.results : []);
+    } catch (error) {
+        renderMonitorSummary([]);
+        target.innerHTML = "";
+        target.appendChild(createTextElement("p", "empty-monitor error-monitor", error.message));
+    }
+}
+
 function uploadMusic(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -866,6 +1005,7 @@ if (getAdminPassword()) {
             document.body.classList.remove("dashboard-locked");
             return fillForm();
         })
+        .then(loadQuizResults)
         .catch(() => {
             sessionStorage.removeItem(ADMIN_SESSION_KEY);
             document.body.classList.add("dashboard-locked");

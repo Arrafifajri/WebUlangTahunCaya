@@ -41,6 +41,7 @@
             <a href="#content">Konten</a>
             <a href="#images">Gambar</a>
             <a href="#interactive">Interaktif</a>
+            <a href="#monitoring">Monitoring</a>
             <a href="#ending">Ending</a>
         </aside>
 
@@ -178,6 +179,20 @@
                         <button type="button" class="ghost-button" onclick="addQuizItem()">Tambah</button>
                     </div>
                     <div id="quizEditor" class="card-editor"></div>
+                </div>
+            </section>
+
+            <section id="monitoring" class="panel">
+                <div class="monitor-heading">
+                    <div>
+                        <h2>Monitoring Quiz</h2>
+                        <p class="panel-note">Pantau jawaban yang masuk, skor, waktu pengerjaan, dan detail pilihan tiap sesi.</p>
+                    </div>
+                    <button type="button" class="ghost-button" onclick="loadQuizResults()">Refresh</button>
+                </div>
+                <div id="quizMonitorSummary" class="monitor-summary"></div>
+                <div id="quizResultsMonitor" class="monitor-list">
+                    <p class="empty-monitor">Belum ada data quiz yang masuk.</p>
                 </div>
             </section>
 
