@@ -687,8 +687,7 @@ function getCoprimeStep(length, seedOffset) {
     return step;
 }
 
-function buildGalleryLinePhotos(photos, lineIndex, usedVisibleIds) {
-    const shuffled = shuffleGalleryPhotos(photos, lineIndex);
+function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, assignedIds, usedVisibleIds) {
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
     const maxUnique = isMobile ? 12 : 18;
@@ -696,37 +695,58 @@ function buildGalleryLinePhotos(photos, lineIndex, usedVisibleIds) {
     const minNeeded = Math.ceil(width / cardWidth) + 4;
     const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
     const targetCount = Math.min(
-        shuffled.length,
-        Math.max(minNeeded, Math.min(shuffled.length, maxUnique))
+        photos.length,
+        Math.max(minNeeded, Math.min(photos.length, maxUnique))
     );
-    const basePool = shuffled.length >= targetCount ? shuffled : photos;
+    const canUseDisjointLinePools = photos.length >= targetCount * totalLines;
     const base = [];
-    const step = getCoprimeStep(basePool.length, lineIndex + 1);
-    let cursor = (lineIndex * visibleCount + lineIndex * lineIndex * 3) % basePool.length;
+    const step = getCoprimeStep(shuffledPool.length, lineIndex + 1);
+    let cursor = (lineIndex * visibleCount + lineIndex * lineIndex * 5) % shuffledPool.length;
 
-    for (let index = 0; index < targetCount; index++) {
-        let selected = null;
-        let selectedCursor = cursor;
+    function photoId(photo) {
+        return photo.src || photo.title || JSON.stringify(photo);
+    }
 
-        for (let attempt = 0; attempt < basePool.length; attempt++) {
-            const candidate = basePool[(cursor + attempt * step) % basePool.length];
-            const id = candidate.src || candidate.title || String(attempt);
+    function pickCandidate(index) {
+        const isVisibleSlot = index < visibleCount;
+
+        for (let attempt = 0; attempt < shuffledPool.length; attempt++) {
+            const candidateIndex = (cursor + attempt * step) % shuffledPool.length;
+            const candidate = shuffledPool[candidateIndex];
+            const id = photoId(candidate);
+            const belongsToLine = candidateIndex % totalLines === lineIndex;
+            const alreadyAssigned = assignedIds.has(id);
+            const visibleDuplicate = usedVisibleIds.has(id);
+
+            if (canUseDisjointLinePools && (!belongsToLine || alreadyAssigned)) continue;
+            if (isVisibleSlot && visibleDuplicate && usedVisibleIds.size < photos.length) continue;
+
+            cursor = (candidateIndex + step) % shuffledPool.length;
+            assignedIds.add(id);
+            if (isVisibleSlot) usedVisibleIds.add(id);
+            return candidate;
+        }
+
+        for (let attempt = 0; attempt < shuffledPool.length; attempt++) {
+            const candidateIndex = (cursor + attempt * step) % shuffledPool.length;
+            const candidate = shuffledPool[candidateIndex];
+            const id = photoId(candidate);
             const isVisibleSlot = index < visibleCount;
 
-            if (!isVisibleSlot || !usedVisibleIds.has(id) || usedVisibleIds.size >= photos.length) {
-                selected = candidate;
-                selectedCursor = (cursor + attempt * step) % basePool.length;
-                if (isVisibleSlot) usedVisibleIds.add(id);
-                break;
-            }
+            if (isVisibleSlot && usedVisibleIds.has(id) && usedVisibleIds.size < photos.length) continue;
+
+            cursor = (candidateIndex + step) % shuffledPool.length;
+            if (isVisibleSlot) usedVisibleIds.add(id);
+            return candidate;
         }
 
-        if (!selected) {
-            selected = basePool[cursor % basePool.length];
-        }
+        const fallback = shuffledPool[cursor % shuffledPool.length];
+        cursor = (cursor + step) % shuffledPool.length;
+        return fallback;
+    }
 
-        base.push(selected);
-        cursor = (selectedCursor + step) % basePool.length;
+    for (let index = 0; index < targetCount; index++) {
+        base.push(pickCandidate(index));
     }
 
     return [...base, ...base];
@@ -767,9 +787,11 @@ function renderMovingGallery() {
     }
 
     gallery.classList.remove("is-empty");
+    const shuffledPool = shuffleGalleryPhotos(photos, 101);
+    const assignedIds = new Set();
     const usedVisibleIds = new Set();
     tracks.forEach((track, trackIndex) => {
-        const rowPhotos = buildGalleryLinePhotos(photos, trackIndex, usedVisibleIds);
+        const rowPhotos = buildGalleryLinePhotos(photos, trackIndex, tracks.length, shuffledPool, assignedIds, usedVisibleIds);
 
         rowPhotos.forEach((photo, photoIndex) => {
             const button = document.createElement("button");
