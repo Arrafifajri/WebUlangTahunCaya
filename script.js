@@ -53,6 +53,8 @@ let skyRevealStarted = false;
 let motionEngineStarted = false;
 let galleryRenderSeed = Date.now();
 let galleryMotionVersion = 0;
+let galleryShuffleRound = 0;
+let galleryReshuffleQueued = false;
 
 function cleanupLegacySettingsCache() {
     try {
@@ -267,12 +269,25 @@ function initMotionEngine() {
                 distance,
                 direction,
                 speed,
-                lastTime: time
+                lastTime: time,
+                completedCycle: false
             };
             motion.gallery.set(track, state);
         }
 
         return state;
+    }
+
+    function queueGalleryRoundShuffle() {
+        if (galleryReshuffleQueued) return;
+        galleryReshuffleQueued = true;
+        requestAnimationFrame(() => {
+            galleryShuffleRound++;
+            galleryReshuffleQueued = false;
+            renderMovingGallery({ keepRound: true });
+            motion.gallery = new WeakMap();
+            galleryMotionVersion++;
+        });
     }
 
     function animateGallery(time) {
@@ -289,8 +304,24 @@ function initMotionEngine() {
 
             if (line.dataset.motionPaused !== "true") {
                 state.x += state.direction * state.speed * elapsed;
-                if (state.direction > 0 && state.x >= 0) state.x = -state.distance;
-                if (state.direction < 0 && Math.abs(state.x) >= state.distance) state.x = 0;
+                let wrapped = false;
+                if (state.direction > 0 && state.x >= 0) {
+                    state.x = -state.distance;
+                    wrapped = true;
+                }
+                if (state.direction < 0 && Math.abs(state.x) >= state.distance) {
+                    state.x = 0;
+                    wrapped = true;
+                }
+                if (wrapped) {
+                    state.completedCycle = true;
+                    track.dataset.completedCycle = "true";
+                    const tracks = motion.galleryTracks.map((item) => item.track);
+                    if (tracks.length && tracks.every((item) => item.dataset.completedCycle === "true")) {
+                        tracks.forEach((item) => item.dataset.completedCycle = "false");
+                        queueGalleryRoundShuffle();
+                    }
+                }
             }
 
             track.style.transform = `translate3d(${state.x}px, 0, 0)`;
@@ -655,7 +686,7 @@ function stringSeed(value) {
 
 function shuffleGalleryPhotos(photos, lineIndex) {
     const shuffled = [...photos];
-    const random = randomFromSeed(stringSeed(`${galleryRenderSeed}-${lineIndex}-${photos.length}`));
+    const random = randomFromSeed(stringSeed(`${galleryRenderSeed}-${galleryShuffleRound}-${lineIndex}-${photos.length}`));
 
     for (let index = shuffled.length - 1; index > 0; index--) {
         const target = Math.floor(random() * (index + 1));
@@ -776,12 +807,15 @@ function updateGalleryLayoutVars() {
     gallery.style.setProperty("--gallery-card-radius", `${width < 480 ? 14 : 18}px`);
 }
 
-function renderMovingGallery() {
+function renderMovingGallery(options = {}) {
     const gallery = document.getElementById("movingGallery");
     if (!gallery) return;
 
     updateGalleryLayoutVars();
-    galleryRenderSeed = Date.now();
+    if (!options.keepRound) {
+        galleryRenderSeed = Date.now();
+        galleryShuffleRound = 0;
+    }
     galleryMotionVersion++;
     const tracks = gallery.querySelectorAll(".gallery-track");
     const photos = getGalleryPhotos();
