@@ -690,15 +690,9 @@ function getCoprimeStep(length, seedOffset) {
 function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, assignedIds, usedVisibleIds) {
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
-    const maxUnique = isMobile ? 12 : 18;
     const cardWidth = isMobile ? 146 : 204;
-    const minNeeded = Math.ceil(width / cardWidth) + 4;
     const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
-    const targetCount = Math.min(
-        photos.length,
-        Math.max(minNeeded, Math.min(photos.length, maxUnique))
-    );
-    const canUseDisjointLinePools = photos.length >= targetCount * totalLines;
+    const canUseDisjointLinePools = photos.length >= totalLines;
     const base = [];
     const step = getCoprimeStep(shuffledPool.length, lineIndex + 1);
     let cursor = (lineIndex * visibleCount + lineIndex * lineIndex * 5) % shuffledPool.length;
@@ -745,7 +739,21 @@ function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, ass
         return fallback;
     }
 
-    for (let index = 0; index < targetCount; index++) {
+    if (canUseDisjointLinePools) {
+        shuffledPool.forEach((photo, photoIndex) => {
+            if (photoIndex % totalLines === lineIndex) {
+                const id = photoId(photo);
+                assignedIds.add(id);
+                if (base.length < visibleCount && !usedVisibleIds.has(id)) {
+                    usedVisibleIds.add(id);
+                }
+                base.push(photo);
+            }
+        });
+    }
+
+    const minNeeded = visibleCount + 4;
+    for (let index = base.length; index < minNeeded; index++) {
         base.push(pickCandidate(index));
     }
 
