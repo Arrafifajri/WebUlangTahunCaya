@@ -749,7 +749,26 @@ main > section:nth-child(even)::after {
 
 .moving-gallery-section h2 {
     font-size: 2.3rem;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
+}
+
+.moving-gallery-intro {
+    width: min(720px, calc(100% - 32px));
+    margin: 0 auto 28px;
+    padding: 0 8px;
+}
+
+.moving-gallery-intro .section-kicker {
+    margin-bottom: 8px;
+}
+
+.moving-gallery-intro p:last-child {
+    max-width: 520px;
+    margin: 0 auto;
+    color: #4b5f78;
+    font-size: clamp(0.92rem, 2.5vw, 1.05rem);
+    font-weight: 700;
+    line-height: 1.65;
 }
 
 .moving-gallery {
