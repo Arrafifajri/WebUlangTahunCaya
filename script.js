@@ -51,6 +51,7 @@ let isOpeningEnvelope = false;
 let skyAnimationStarted = false;
 let skyRevealStarted = false;
 let motionEngineStarted = false;
+let galleryRenderSeed = Date.now();
 
 function cleanupLegacySettingsCache() {
     try {
@@ -325,6 +326,7 @@ function initMotionEngine() {
     requestAnimationFrame(frame);
     window.addEventListener("resize", () => {
         motion.gallery = new WeakMap();
+        updateGalleryLayoutVars();
     });
 }
 
@@ -618,10 +620,55 @@ function getGalleryPhotos() {
     }));
 }
 
+function randomFromSeed(seed) {
+    let value = seed % 2147483647;
+    if (value <= 0) value += 2147483646;
+    return () => {
+        value = value * 16807 % 2147483647;
+        return (value - 1) / 2147483646;
+    };
+}
+
+function stringSeed(value) {
+    return String(value).split("").reduce((total, char) => {
+        return (total * 31 + char.charCodeAt(0)) >>> 0;
+    }, 2166136261);
+}
+
+function shuffleGalleryPhotos(photos, lineIndex) {
+    const shuffled = [...photos];
+    const random = randomFromSeed(stringSeed(`${galleryRenderSeed}-${lineIndex}-${photos.length}`));
+
+    for (let index = shuffled.length - 1; index > 0; index--) {
+        const target = Math.floor(random() * (index + 1));
+        [shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]];
+    }
+
+    return shuffled;
+}
+
+function updateGalleryLayoutVars() {
+    const gallery = document.getElementById("movingGallery");
+    if (!gallery) return;
+
+    const width = window.innerWidth || document.documentElement.clientWidth || 360;
+    const cardWidth = Math.round(Math.min(
+        width < 480 ? 136 : width < 900 ? 164 : 190,
+        Math.max(width < 480 ? 112 : 130, width * (width < 480 ? 0.34 : width < 900 ? 0.24 : 0.12))
+    ));
+    const gap = width < 480 ? 10 : width < 900 ? 12 : 14;
+
+    gallery.style.setProperty("--gallery-card-width", `${cardWidth}px`);
+    gallery.style.setProperty("--gallery-gap", `${gap}px`);
+    gallery.style.setProperty("--gallery-card-radius", `${width < 480 ? 14 : 18}px`);
+}
+
 function renderMovingGallery() {
     const gallery = document.getElementById("movingGallery");
     if (!gallery) return;
 
+    updateGalleryLayoutVars();
+    galleryRenderSeed = Date.now();
     const tracks = gallery.querySelectorAll(".gallery-track");
     const photos = getGalleryPhotos();
     tracks.forEach((track) => {
@@ -635,10 +682,11 @@ function renderMovingGallery() {
 
     gallery.classList.remove("is-empty");
     tracks.forEach((track, trackIndex) => {
+        const randomizedPhotos = shuffleGalleryPhotos(photos, trackIndex);
         const rowPhotos = [];
-        const offset = trackIndex % photos.length;
-        for (let i = 0; i < Math.max(photos.length * 4, 16); i++) {
-            rowPhotos.push(photos[(i + offset) % photos.length]);
+        const copies = Math.max(randomizedPhotos.length * 4, 18);
+        for (let i = 0; i < copies; i++) {
+            rowPhotos.push(randomizedPhotos[i % randomizedPhotos.length]);
         }
 
         rowPhotos.forEach((photo) => {
