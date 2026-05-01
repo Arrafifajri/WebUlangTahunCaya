@@ -665,18 +665,68 @@ function shuffleGalleryPhotos(photos, lineIndex) {
     return shuffled;
 }
 
-function buildGalleryLinePhotos(photos, lineIndex) {
+function gcd(a, b) {
+    let left = Math.abs(a);
+    let right = Math.abs(b);
+    while (right) {
+        [left, right] = [right, left % right];
+    }
+    return left || 1;
+}
+
+function getCoprimeStep(length, seedOffset) {
+    if (length <= 1) return 1;
+    let step = Math.max(1, Math.floor(length * 0.37) + seedOffset * 2 + 1);
+    step %= length;
+    if (step === 0) step = 1;
+
+    while (gcd(step, length) !== 1) {
+        step = (step + 1) % length || 1;
+    }
+
+    return step;
+}
+
+function buildGalleryLinePhotos(photos, lineIndex, usedVisibleIds) {
     const shuffled = shuffleGalleryPhotos(photos, lineIndex);
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
-    const maxUnique = isMobile ? 10 : 14;
+    const maxUnique = isMobile ? 12 : 18;
     const cardWidth = isMobile ? 146 : 204;
     const minNeeded = Math.ceil(width / cardWidth) + 4;
-    const targetCount = Math.max(minNeeded, Math.min(shuffled.length, maxUnique));
+    const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
+    const targetCount = Math.min(
+        shuffled.length,
+        Math.max(minNeeded, Math.min(shuffled.length, maxUnique))
+    );
+    const basePool = shuffled.length >= targetCount ? shuffled : photos;
     const base = [];
+    const step = getCoprimeStep(basePool.length, lineIndex + 1);
+    let cursor = (lineIndex * visibleCount + lineIndex * lineIndex * 3) % basePool.length;
 
     for (let index = 0; index < targetCount; index++) {
-        base.push(shuffled[index % shuffled.length]);
+        let selected = null;
+        let selectedCursor = cursor;
+
+        for (let attempt = 0; attempt < basePool.length; attempt++) {
+            const candidate = basePool[(cursor + attempt * step) % basePool.length];
+            const id = candidate.src || candidate.title || String(attempt);
+            const isVisibleSlot = index < visibleCount;
+
+            if (!isVisibleSlot || !usedVisibleIds.has(id) || usedVisibleIds.size >= photos.length) {
+                selected = candidate;
+                selectedCursor = (cursor + attempt * step) % basePool.length;
+                if (isVisibleSlot) usedVisibleIds.add(id);
+                break;
+            }
+        }
+
+        if (!selected) {
+            selected = basePool[cursor % basePool.length];
+        }
+
+        base.push(selected);
+        cursor = (selectedCursor + step) % basePool.length;
     }
 
     return [...base, ...base];
@@ -717,8 +767,9 @@ function renderMovingGallery() {
     }
 
     gallery.classList.remove("is-empty");
+    const usedVisibleIds = new Set();
     tracks.forEach((track, trackIndex) => {
-        const rowPhotos = buildGalleryLinePhotos(photos, trackIndex);
+        const rowPhotos = buildGalleryLinePhotos(photos, trackIndex, usedVisibleIds);
 
         rowPhotos.forEach((photo, photoIndex) => {
             const button = document.createElement("button");
