@@ -5,10 +5,10 @@ const ADMIN_SESSION_KEY = "cayaDashboardPassword";
 let currentSettings;
 
 const defaultSettings = {
-    unlockDate: "2026-05-06",
+    unlockDate: "2026-05-06T00:00",
     countdownKicker: "Menuju 06 Mei",
     countdownTitle: "Countdown Ulang Tahunmu 🎂",
-    lockedMessage: "Isi web ini akan terbuka otomatis pada 06 Mei.",
+    lockedMessage: "Isi web ini akan terbuka otomatis sesuai tanggal dan jam yang kamu tentukan.",
     unlockedMessage: "Waktunya buka amplop. Selamat ulang tahun, sayang! 💙",
     heroTitle: "HBD Sayang! ☁️",
     heroMessage: "Sejauh langit membentang, sebanyak itu doaku buat kamu. I love you!",
@@ -287,6 +287,29 @@ function normalizeMovingGalleryTitle(item) {
     return item;
 }
 
+function normalizeDateTimeLocalValue(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+
+    let match = /^(\d{4}-\d{2}-\d{2})$/.exec(text);
+    if (match) return `${match[1]}T00:00`;
+
+    match = /^(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})/.exec(text);
+    if (match) return `${match[1]}T${match[2]}:${match[3]}`;
+
+    match = /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2})[:.](\d{2}))?$/.exec(text);
+    if (match) {
+        const day = match[1];
+        const month = match[2];
+        const year = match[3];
+        const hour = match[4] || "00";
+        const minute = match[5] || "00";
+        return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+
+    return text;
+}
+
 // TAGLINE: Isi semua field dashboard dari currentSettings dan render editor GUI.
 async function fillForm() {
     let data;
@@ -301,6 +324,7 @@ async function fillForm() {
         }
     }
     currentSettings = structuredClone(data);
+    currentSettings.unlockDate = normalizeDateTimeLocalValue(currentSettings.unlockDate || defaultSettings.unlockDate);
     currentSettings.movingGallery = (currentSettings.movingGallery || []).map(normalizeMovingGalleryTitle);
     if (/^pesan untukmu/i.test(String(currentSettings.curhatTitle || "").trim())) {
         currentSettings.curhatTitle = defaultSettings.curhatTitle;
@@ -335,7 +359,7 @@ function collectSettings() {
     const gallerySpeed = Math.min(2.5, Math.max(0.5, Number($("movingGallerySpeed").value) || 1));
 
     return {
-        unlockDate: $("unlockDate").value || defaultSettings.unlockDate,
+        unlockDate: normalizeDateTimeLocalValue($("unlockDate").value) || defaultSettings.unlockDate,
         countdownKicker: $("countdownKicker").value.trim(),
         countdownTitle: $("countdownTitle").value.trim(),
         lockedMessage: $("lockedMessage").value.trim(),

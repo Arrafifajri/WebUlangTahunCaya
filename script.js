@@ -210,6 +210,51 @@ function initSkyCanvas() {
     window.addEventListener("resize", resizeSky);
 }
 
+// TAGLINE: Renderer love ringan, membuat hati/emoji melayang tanpa mengganggu klik.
+function initRomanceRenderer() {
+    const layer = document.getElementById("romanceRenderer");
+    if (!layer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const symbols = ["\u2661", "\u2665", "\uD83D\uDC99", "\uD83E\uDD0D", "\u2728"];
+    let activeSprites = 0;
+
+    function spawnSprite() {
+        if (activeSprites > 18) return;
+        activeSprites++;
+
+        const sprite = document.createElement("span");
+        sprite.className = "romance-sprite";
+        sprite.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        const startX = 4 + Math.random() * 92;
+        const driftX = -40 + Math.random() * 80;
+        const size = 14 + Math.random() * 18;
+        const duration = 7000 + Math.random() * 4500;
+
+        sprite.style.left = `${startX}vw`;
+        sprite.style.fontSize = `${size}px`;
+        sprite.style.setProperty("--sprite-drift", `${driftX}px`);
+        layer.appendChild(sprite);
+
+        sprite.animate([
+            { opacity: 0, transform: "translate3d(0, 32px, 0) scale(0.8) rotate(-8deg)" },
+            { opacity: 0.85, offset: 0.16, transform: "translate3d(0, 0, 0) scale(1) rotate(4deg)" },
+            { opacity: 0, transform: `translate3d(${driftX}px, -92vh, 0) scale(1.38) rotate(20deg)` }
+        ], {
+            duration,
+            easing: "cubic-bezier(.22,.82,.24,1)",
+            fill: "forwards"
+        }).onfinish = () => {
+            activeSprites--;
+            sprite.remove();
+        };
+    }
+
+    for (let index = 0; index < 8; index++) {
+        setTimeout(spawnSprite, index * 280);
+    }
+    setInterval(spawnSprite, 850);
+}
+
 // TAGLINE: Section reveal halus saat pengunjung scroll setelah amplop dibuka.
 function initSkyReveal() {
     if (skyRevealStarted) return;
@@ -515,25 +560,43 @@ function padNumber(value) {
 function getUnlockDate() {
     const raw = String(settings.unlockDate || "").trim();
 
-    // Format utama dashboard: YYYY-MM-DD
-    let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+    // Format utama dashboard: YYYY-MM-DDTHH:mm
+    let match = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(raw);
     if (match) {
         const year = Number(match[1]);
         const month = Number(match[2]);
         const day = Number(match[3]);
-        return new Date(year, month - 1, day, 0, 0, 0, 0);
+        const hour = Number(match[4] || 0);
+        const minute = Number(match[5] || 0);
+        const second = Number(match[6] || 0);
+        return new Date(year, month - 1, day, hour, minute, second, 0);
     }
 
-    // Fallback jika ada format DD/MM/YYYY dari input manual
-    match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw);
+    // Fallback jika ada format DD/MM/YYYY atau DD/MM/YYYY HH:mm dari input manual.
+    match = /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2})[:.](\d{2}))?$/.exec(raw);
     if (match) {
         const day = Number(match[1]);
         const month = Number(match[2]);
         const year = Number(match[3]);
-        return new Date(year, month - 1, day, 0, 0, 0, 0);
+        const hour = Number(match[4] || 0);
+        const minute = Number(match[5] || 0);
+        return new Date(year, month - 1, day, hour, minute, 0, 0);
     }
 
     return null;
+}
+
+function formatUnlockDateTime(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+
+    return new Intl.DateTimeFormat("id-ID", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(date).replace(/\./g, ":");
 }
 
 function isBirthdayUnlocked() {
@@ -552,6 +615,10 @@ function updateCountdown() {
     }
     const distance = target - now;
     const message = document.getElementById("countdownMessage");
+    const unlockHint = document.getElementById("unlockTimeHint");
+    if (unlockHint) {
+        unlockHint.textContent = `Dibuka pada ${formatUnlockDateTime(target)}`;
+    }
 
     if (distance <= 0) {
         document.getElementById("days").textContent = "00";
@@ -1753,6 +1820,7 @@ document.getElementById("pesanCurhat")?.addEventListener("input", updateCurhatCo
 
 async function initPage() {
     initSkyCanvas();
+    initRomanceRenderer();
     initMotionEngine();
     cleanupLegacySettingsCache();
     await syncSettingsVersion();

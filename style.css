@@ -32,6 +32,24 @@ body.modal-open {
     overflow: hidden;
 }
 
+/* TAGLINE: Lapisan animasi love dari JavaScript, pointer-events none agar UI tetap bisa diklik. */
+#romanceRenderer {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.romance-sprite {
+    position: absolute;
+    bottom: -44px;
+    color: rgba(0,119,182,0.54);
+    text-shadow: 0 8px 20px rgba(255,255,255,0.9);
+    filter: drop-shadow(0 8px 18px rgba(2,62,138,0.18));
+    will-change: transform, opacity;
+}
+
 body.js-motion .gate-countdown,
 body.js-motion .envelope,
 body.js-motion .gallery-track,
@@ -218,7 +236,7 @@ main > section:nth-child(even)::after {
     position: relative;
     z-index: 2;
     font-size: clamp(1.8rem, 5vw, 3rem);
-    margin-bottom: 22px;
+    margin-bottom: 8px;
     text-shadow: 0 8px 24px rgba(255,255,255,0.86);
 }
 
@@ -227,6 +245,25 @@ main > section:nth-child(even)::after {
 .countdown-message {
     position: relative;
     z-index: 2;
+}
+
+.unlock-time-hint {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    margin: 0 auto 20px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.75);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.62);
+    color: #075985;
+    font-size: clamp(0.78rem, 2.3vw, 0.96rem);
+    font-weight: 800;
+    line-height: 1.35;
+    box-shadow: 0 12px 26px rgba(0,119,182,0.08);
 }
 
 .countdown-sky {
@@ -318,6 +355,76 @@ main > section:nth-child(even)::after {
 .star-a { left: 18%; top: 26px; }
 .star-b { left: 54%; top: 18px; animation-delay: -0.8s; }
 .star-c { left: 82%; top: 42px; animation-delay: -1.4s; }
+
+.love-mascot {
+    position: absolute;
+    left: 50%;
+    top: 28px;
+    width: 86px;
+    height: 64px;
+    transform: translateX(-50%);
+    animation: mascotFloat 3.8s ease-in-out infinite;
+    filter: drop-shadow(0 16px 22px rgba(2,62,138,0.18));
+    z-index: 2;
+}
+
+.mascot-face {
+    position: absolute;
+    inset: 5px 17px 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50% 50% 46% 46%;
+    background: linear-gradient(180deg, #ffffff, #e0f2fe);
+    color: #0077b6;
+    font-size: 1.2rem;
+    box-shadow: inset 0 -8px 14px rgba(0,119,182,0.08);
+}
+
+.mascot-face::before,
+.mascot-face::after {
+    content: "";
+    position: absolute;
+    top: 18px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #023e8a;
+}
+
+.mascot-face::before { left: 15px; }
+.mascot-face::after { right: 15px; }
+
+.mascot-wing {
+    position: absolute;
+    top: 27px;
+    width: 30px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.86);
+    box-shadow: inset 0 -5px 10px rgba(0,119,182,0.08);
+}
+
+.wing-left {
+    left: 0;
+    transform: rotate(-12deg);
+}
+
+.wing-right {
+    right: 0;
+    transform: rotate(12deg);
+}
+
+.heart-orbit {
+    position: absolute;
+    z-index: 2;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 8px 18px rgba(0,119,182,0.18);
+    animation: orbitHeart 4.8s ease-in-out infinite;
+}
+
+.orbit-a { left: 31%; top: 40px; font-size: 1.25rem; animation-delay: -1s; }
+.orbit-b { left: 62%; top: 54px; font-size: 0.95rem; animation-delay: -2.2s; }
+.orbit-c { left: 73%; top: 20px; font-size: 1.08rem; animation-delay: -3.1s; }
 
 .flying-love {
     position: absolute;
@@ -496,6 +603,16 @@ main > section:nth-child(even)::after {
 @keyframes twinkle {
     0%, 100% { transform: scale(0.65); opacity: 0.45; }
     50% { transform: scale(1.25); opacity: 1; }
+}
+
+@keyframes mascotFloat {
+    0%, 100% { transform: translate(-50%, 0) rotate(-2deg); }
+    50% { transform: translate(-50%, -9px) rotate(2deg); }
+}
+
+@keyframes orbitHeart {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(0.86); opacity: 0.55; }
+    50% { transform: translate3d(12px, -12px, 0) scale(1.18); opacity: 1; }
 }
 
 @keyframes flyingAcross {
@@ -2029,6 +2146,27 @@ body.js-motion .gallery-line:focus-within .gallery-track {
         height: 96px;
     }
 
+    .love-mascot {
+        top: 18px;
+        width: 70px;
+        height: 52px;
+    }
+
+    .mascot-face {
+        inset: 4px 14px 0;
+        font-size: 1rem;
+    }
+
+    .mascot-wing {
+        top: 22px;
+        width: 24px;
+        height: 18px;
+    }
+
+    .heart-orbit {
+        opacity: 0.8;
+    }
+
     .flying-love {
         animation-duration: 6.8s;
     }
@@ -2113,7 +2251,7 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 
     .gate-countdown h2 {
         font-size: clamp(1.45rem, 8vw, 2.1rem);
-        margin-bottom: 16px;
+        margin-bottom: 8px;
         line-height: 1.08;
     }
 
@@ -2126,6 +2264,14 @@ body.js-motion .gallery-line:focus-within .gallery-track {
         margin-top: 16px;
         font-size: 0.9rem;
         line-height: 1.45;
+    }
+
+    .unlock-time-hint {
+        width: fit-content;
+        max-width: 100%;
+        margin-bottom: 14px;
+        padding: 7px 12px;
+        font-size: 0.76rem;
     }
 
     .modal {
