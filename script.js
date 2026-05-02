@@ -53,6 +53,8 @@ let isOpeningEnvelope = false;
 let skyAnimationStarted = false;
 let skyRevealStarted = false;
 let motionEngineStarted = false;
+let animationRendererStarted = false;
+let animationRefreshQueued = false;
 let galleryRenderSeed = Date.now();
 let galleryMotionVersion = 0;
 let galleryShuffleRound = 0;
@@ -274,24 +276,402 @@ function initRomanceRenderer() {
         sprite.style.setProperty("--sprite-drift", `${driftX}px`);
         layer.appendChild(sprite);
 
-        sprite.animate([
-            { opacity: 0, transform: "translate3d(0, 32px, 0) scale(0.8) rotate(-8deg)" },
-            { opacity: 0.85, offset: 0.16, transform: "translate3d(0, 0, 0) scale(1) rotate(4deg)" },
-            { opacity: 0, transform: `translate3d(${driftX}px, -92vh, 0) scale(1.38) rotate(20deg)` }
-        ], {
+        playRendererAnimation(sprite, {
+            loop: false,
             duration,
-            easing: "cubic-bezier(.22,.82,.24,1)",
-            fill: "forwards"
-        }).onfinish = () => {
+            easing: "easeOutCubic",
+            webEasing: "cubic-bezier(.22,.82,.24,1)",
+            animeKeyframes: [
+                { opacity: 0, translateY: 32, scale: 0.8, rotate: -8 },
+                { opacity: 0.85, translateY: 0, scale: 1, rotate: 4 },
+                { opacity: 0, translateX: driftX, translateY: "-92vh", scale: 1.38, rotate: 20 }
+            ],
+            webKeyframes: [
+                { opacity: 0, transform: "translate3d(0, 32px, 0) scale(0.8) rotate(-8deg)" },
+                { opacity: 0.85, offset: 0.16, transform: "translate3d(0, 0, 0) scale(1) rotate(4deg)" },
+                { opacity: 0, transform: `translate3d(${driftX}px, -92vh, 0) scale(1.38) rotate(20deg)` }
+            ]
+        });
+        setTimeout(() => {
             activeSprites--;
             sprite.remove();
-        };
+        }, duration + 80);
     }
 
     for (let index = 0; index < initialSprites; index++) {
         setTimeout(spawnSprite, index * (visualProfile.lowPower ? 520 : 280));
     }
     setInterval(spawnSprite, spawnInterval);
+}
+
+// TAGLINE: Resolver target animasi agar Anime.js dan fallback Web Animations memakai API yang sama.
+function resolveAnimationTargets(targets) {
+    if (!targets) return [];
+    if (typeof targets === "string") return Array.from(document.querySelectorAll(targets));
+    if (targets instanceof Element) return [targets];
+    return Array.from(targets).filter(Boolean);
+}
+
+// TAGLINE: Satu renderer animasi; Anime.js dipakai kalau tersedia, Web Animations jadi cadangan offline/CDN gagal.
+function playRendererAnimation(targets, options = {}) {
+    const elements = resolveAnimationTargets(targets);
+    if (!elements.length || visualProfile.reduceMotion) return null;
+
+    const durationScale = visualProfile.lowPower ? Number(options.lowPowerScale || 1.25) : 1;
+    const duration = Math.max(120, Number(options.duration || 1000) * durationScale);
+    const delay = options.delay || 0;
+    const loop = options.loop !== false;
+
+    if (typeof window.anime === "function") {
+        const animeOptions = {
+            targets: elements,
+            duration,
+            delay,
+            easing: options.easing || "easeInOutSine",
+            loop,
+            direction: options.direction || "normal",
+            autoplay: true
+        };
+
+        if (options.animeKeyframes) {
+            animeOptions.keyframes = options.animeKeyframes;
+        } else if (options.anime) {
+            Object.assign(animeOptions, options.anime);
+        }
+
+        return window.anime(animeOptions);
+    }
+
+    const keyframes = options.webKeyframes || [];
+    if (!keyframes.length) return null;
+
+    elements.forEach((element, index) => {
+        const resolvedDelay = typeof delay === "function" ? delay(element, index, elements.length) : Number(delay || 0);
+        element.animate(keyframes, {
+            duration,
+            delay: resolvedDelay,
+            iterations: loop ? Infinity : 1,
+            direction: options.direction || "normal",
+            easing: options.webEasing || "ease-in-out",
+            fill: options.fill || (loop ? "none" : "forwards")
+        });
+    });
+
+    return null;
+}
+
+// TAGLINE: Penanda supaya elemen yang sama tidak ditempeli animasi dobel saat data dashboard di-render ulang.
+function animateFreshElements(targets, key, options) {
+    const attr = `data-js-motion-${key}`;
+    const freshElements = resolveAnimationTargets(targets).filter((element) => {
+        if (element.hasAttribute(attr)) return false;
+        element.setAttribute(attr, "true");
+        return true;
+    });
+
+    if (freshElements.length) {
+        playRendererAnimation(freshElements, options);
+    }
+}
+
+// TAGLINE: Menambahkan charm kecil via JavaScript, jadi CSS fokus ke layout dan bukan sumber animasi utama.
+function decorateMotionElements() {
+    const headings = document.querySelectorAll("main > section > h2, .moving-gallery-intro h2, .curhat-card h2");
+    headings.forEach((heading) => {
+        if (!heading.querySelector(".js-heading-charm.charm-left")) {
+            const left = document.createElement("span");
+            left.className = "js-heading-charm charm-left";
+            left.textContent = "\u2661";
+            heading.appendChild(left);
+        }
+        if (!heading.querySelector(".js-heading-charm.charm-right")) {
+            const right = document.createElement("span");
+            right.className = "js-heading-charm charm-right";
+            right.textContent = "\u2726";
+            heading.appendChild(right);
+        }
+    });
+
+    const sectionCharmCount = visualProfile.lowPower ? 1 : 2;
+    document.querySelectorAll("main > section").forEach((section, sectionIndex) => {
+        for (let index = 0; index < sectionCharmCount; index++) {
+            if (section.querySelector(`.js-section-charm[data-charm-index="${index}"]`)) continue;
+            const charm = document.createElement("span");
+            charm.className = `js-section-charm charm-${index}`;
+            charm.dataset.charmIndex = String(index);
+            charm.textContent = (sectionIndex + index) % 2 ? "\u2727" : "\u2661";
+            section.appendChild(charm);
+        }
+    });
+
+    const cardSelectors = ".reason-card, .memory-card, .quiz-card, .meter-card, .wish-jar, .video-frame, .curhat-card";
+    document.querySelectorAll(cardSelectors).forEach((card, index) => {
+        if (card.querySelector(":scope > .js-card-charm")) return;
+        const charm = document.createElement("span");
+        charm.className = "js-card-charm";
+        charm.textContent = ["\u2661", "\u2726", "\u221E"][index % 3];
+        card.appendChild(charm);
+    });
+}
+
+// TAGLINE: Renderer utama animasi dekoratif; jumlah dan durasi otomatis diringankan untuk HP lemah.
+function refreshJavaScriptAnimationRenderer() {
+    if (!animationRendererStarted || visualProfile.reduceMotion) return;
+
+    decorateMotionElements();
+    const slowScale = visualProfile.lowPower ? 1.45 : 1;
+
+    animateFreshElements(".gate-countdown", "gate-float", {
+        duration: 5200 * slowScale,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -5, scale: 1.003 },
+            { translateY: 4, scale: 0.998 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -5px, 0) scale(1.003)" },
+            { transform: "translate3d(0, 4px, 0) scale(0.998)" }
+        ]
+    });
+
+    animateFreshElements(".countdown-card", "countdown-card-float", {
+        duration: 3800 * slowScale,
+        delay: (element, index) => index * 140,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -3 },
+            { translateY: 3 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -3px, 0)" },
+            { transform: "translate3d(0, 3px, 0)" }
+        ]
+    });
+
+    animateFreshElements(".sky-cloud", "countdown-cloud", {
+        duration: 12000 * slowScale,
+        delay: (element, index) => index * 1100,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateX: -14, translateY: 0 },
+            { translateX: 18, translateY: -4 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(-14px, 0, 0)" },
+            { transform: "translate3d(18px, -4px, 0)" }
+        ]
+    });
+
+    animateFreshElements(".cloud", "background-cloud", {
+        duration: 52000 * slowScale,
+        delay: (element, index) => index * 5200,
+        easing: "linear",
+        animeKeyframes: [
+            { translateX: "-12vw" },
+            { translateX: "135vw" }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(-12vw, 0, 0)" },
+            { transform: "translate3d(135vw, 0, 0)" }
+        ]
+    });
+
+    animateFreshElements(".sky-star", "star-twinkle", {
+        duration: 2600 * slowScale,
+        delay: (element, index) => index * 320,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { opacity: 0.28, scale: 0.72 },
+            { opacity: 1, scale: 1.22 }
+        ],
+        webKeyframes: [
+            { opacity: 0.28, transform: "scale(0.72)" },
+            { opacity: 1, transform: "scale(1.22)" }
+        ]
+    });
+
+    animateFreshElements(".love-mascot", "mascot-float", {
+        duration: 4300 * slowScale,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateX: "-50%", translateY: -5, rotate: -2 },
+            { translateX: "-50%", translateY: 7, rotate: 2 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(-50%, -5px, 0) rotate(-2deg)" },
+            { transform: "translate3d(-50%, 7px, 0) rotate(2deg)" }
+        ]
+    });
+
+    animateFreshElements(".heart-orbit", "heart-orbit", {
+        duration: 4300 * slowScale,
+        delay: (element, index) => index * 440,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -8, scale: 0.92, rotate: -8 },
+            { translateY: 9, scale: 1.18, rotate: 10 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -8px, 0) scale(0.92) rotate(-8deg)" },
+            { transform: "translate3d(0, 9px, 0) scale(1.18) rotate(10deg)" }
+        ]
+    });
+
+    animateFreshElements(".flying-love", "flying-love", {
+        duration: 7600 * slowScale,
+        easing: "easeInOutQuad",
+        animeKeyframes: [
+            { translateX: 0, translateY: 0, opacity: 0 },
+            { translateX: "46vw", translateY: -8, opacity: 1 },
+            { translateX: "92vw", translateY: 4, opacity: 0 }
+        ],
+        webKeyframes: [
+            { opacity: 0, transform: "translate3d(0, 0, 0)" },
+            { opacity: 1, transform: "translate3d(46vw, -8px, 0)" },
+            { opacity: 0, transform: "translate3d(92vw, 4px, 0)" }
+        ]
+    });
+
+    animateFreshElements(".fly-body", "fly-body", {
+        duration: 1200 * slowScale,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -4 },
+            { translateY: 5 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -4px, 0)" },
+            { transform: "translate3d(0, 5px, 0)" }
+        ]
+    });
+
+    animateFreshElements(".js-heading-charm", "heading-charm", {
+        duration: 3600 * slowScale,
+        delay: (element, index) => index * 90,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -3, rotate: -7, scale: 0.9 },
+            { translateY: 5, rotate: 8, scale: 1.08 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -3px, 0) rotate(-7deg) scale(0.9)" },
+            { transform: "translate3d(0, 5px, 0) rotate(8deg) scale(1.08)" }
+        ]
+    });
+
+    animateFreshElements(".js-section-charm", "section-charm", {
+        duration: 7200 * slowScale,
+        delay: (element, index) => index * 260,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateX: -10, translateY: -8, opacity: 0.24, rotate: -8 },
+            { translateX: 12, translateY: 10, opacity: 0.62, rotate: 10 }
+        ],
+        webKeyframes: [
+            { opacity: 0.24, transform: "translate3d(-10px, -8px, 0) rotate(-8deg)" },
+            { opacity: 0.62, transform: "translate3d(12px, 10px, 0) rotate(10deg)" }
+        ]
+    });
+
+    animateFreshElements(".js-card-charm", "card-charm", {
+        duration: 5200 * slowScale,
+        delay: (element, index) => index * 120,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -4, rotate: -8, scale: 0.95 },
+            { translateY: 5, rotate: 8, scale: 1.08 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -4px, 0) rotate(-8deg) scale(0.95)" },
+            { transform: "translate3d(0, 5px, 0) rotate(8deg) scale(1.08)" }
+        ]
+    });
+
+    animateFreshElements(".wish-text", "wish-note", {
+        duration: 4600 * slowScale,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -2, scale: 0.998 },
+            { translateY: 3, scale: 1.006 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -2px, 0) scale(0.998)" },
+            { transform: "translate3d(0, 3px, 0) scale(1.006)" }
+        ]
+    });
+
+    animateFreshElements(".click-instruction", "click-instruction", {
+        duration: 1700 * slowScale,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -4 },
+            { translateY: 5 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -4px, 0)" },
+            { transform: "translate3d(0, 5px, 0)" }
+        ]
+    });
+
+    if (!visualProfile.lowPower) {
+        animateFreshElements(".swinging", "polaroid-swing", {
+            duration: 4600,
+            direction: "alternate",
+            easing: "easeInOutSine",
+            animeKeyframes: [
+                { rotate: -2, translateY: -3 },
+                { rotate: 2, translateY: 4 }
+            ],
+            webKeyframes: [
+                { transform: "rotate(-2deg) translate3d(0, -3px, 0)" },
+                { transform: "rotate(2deg) translate3d(0, 4px, 0)" }
+            ]
+        });
+
+        animateFreshElements(".swinging-reverse", "polaroid-swing-reverse", {
+            duration: 5200,
+            direction: "alternate",
+            easing: "easeInOutSine",
+            animeKeyframes: [
+                { rotate: 2, translateY: -2 },
+                { rotate: -2, translateY: 4 }
+            ],
+            webKeyframes: [
+                { transform: "rotate(2deg) translate3d(0, -2px, 0)" },
+                { transform: "rotate(-2deg) translate3d(0, 4px, 0)" }
+            ]
+        });
+    }
+}
+
+function queueJavaScriptAnimationRefresh() {
+    if (!animationRendererStarted || animationRefreshQueued) return;
+    animationRefreshQueued = true;
+    requestAnimationFrame(() => {
+        animationRefreshQueued = false;
+        refreshJavaScriptAnimationRenderer();
+    });
+}
+
+function initJavaScriptAnimationRenderer() {
+    if (animationRendererStarted) return;
+    animationRendererStarted = true;
+    if (visualProfile.reduceMotion) return;
+
+    document.body.classList.add("js-rendered-motion");
+    refreshJavaScriptAnimationRenderer();
 }
 
 // TAGLINE: Section reveal halus saat pengunjung scroll setelah amplop dibuka.
@@ -325,16 +705,18 @@ function initMotionEngine() {
     motionEngineStarted = true;
 
     const reduceMotion = visualProfile.reduceMotion;
-    if (reduceMotion || visualProfile.lowPower) return;
+    if (reduceMotion) return;
 
     document.body.classList.add("js-motion");
 
     const motion = {
         startedAt: performance.now(),
+        lastFrame: 0,
         gallery: new WeakMap(),
         galleryTracks: [],
         galleryVersion: -1
     };
+    const minFrameGap = visualProfile.lowPower ? 42 : 0;
 
     function refreshGalleryTracks() {
         if (motion.galleryVersion === galleryMotionVersion) return;
@@ -454,9 +836,12 @@ function initMotionEngine() {
     }
 
     function frame(time) {
-        animateHero(time);
+        if (minFrameGap && time - motion.lastFrame < minFrameGap) {
+            requestAnimationFrame(frame);
+            return;
+        }
+        motion.lastFrame = time;
         animateGallery(time);
-        animateSections(time);
         requestAnimationFrame(frame);
     }
 
@@ -1224,6 +1609,7 @@ function applySettings() {
     quizQuestions = settings.quiz;
     resetQuizSession();
     carouselPhotos = settings.carousel;
+    queueJavaScriptAnimationRefresh();
 }
 
 function createHeart() {
@@ -1239,15 +1625,23 @@ function createHeart() {
     document.body.appendChild(heart);
 
     const duration = 2400 + Math.random() * 1800;
-    heart.animate([
-        { opacity: 1, transform: "translate3d(0, 0, 0) scale(1) rotate(0deg)" },
-        { opacity: 0.88, transform: `translate3d(${driftX * 0.7}px, -105px, 0) scale(1.38) rotate(8deg)` },
-        { opacity: 0, transform: `translate3d(${driftX}px, -230px, 0) scale(1.9) rotate(18deg)` }
-    ], {
+    playRendererAnimation(heart, {
+        loop: false,
         duration,
-        easing: "cubic-bezier(.2,.85,.25,1)",
-        fill: "forwards"
-    }).onfinish = () => heart.remove();
+        easing: "easeOutCubic",
+        webEasing: "cubic-bezier(.2,.85,.25,1)",
+        animeKeyframes: [
+            { opacity: 1, translateX: 0, translateY: 0, scale: 1, rotate: 0 },
+            { opacity: 0.88, translateX: driftX * 0.7, translateY: -105, scale: 1.38, rotate: 8 },
+            { opacity: 0, translateX: driftX, translateY: -230, scale: 1.9, rotate: 18 }
+        ],
+        webKeyframes: [
+            { opacity: 1, transform: "translate3d(0, 0, 0) scale(1) rotate(0deg)" },
+            { opacity: 0.88, transform: `translate3d(${driftX * 0.7}px, -105px, 0) scale(1.38) rotate(8deg)` },
+            { opacity: 0, transform: `translate3d(${driftX}px, -230px, 0) scale(1.9) rotate(18deg)` }
+        ]
+    });
+    setTimeout(() => heart.remove(), duration + 80);
 }
 
 function createConfettiPiece() {
@@ -1261,15 +1655,24 @@ function createConfettiPiece() {
     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
     document.body.appendChild(confetti);
 
-    confetti.animate([
-        { opacity: 1, transform: `translate3d(0, 0, 0) rotate(0deg)` },
-        { opacity: 0.9, transform: `translate3d(${driftX * 0.4}px, 48vh, 0) rotate(${rotation * 0.55}deg)` },
-        { opacity: 0, transform: `translate3d(${driftX}px, 105vh, 0) rotate(${rotation}deg)` }
-    ], {
-        duration: 2200 + Math.random() * 1400,
+    const duration = 2200 + Math.random() * 1400;
+    playRendererAnimation(confetti, {
+        loop: false,
+        duration,
         easing: "linear",
-        fill: "forwards"
-    }).onfinish = () => confetti.remove();
+        webEasing: "linear",
+        animeKeyframes: [
+            { opacity: 1, translateX: 0, translateY: 0, rotate: 0 },
+            { opacity: 0.9, translateX: driftX * 0.4, translateY: "48vh", rotate: rotation * 0.55 },
+            { opacity: 0, translateX: driftX, translateY: "105vh", rotate: rotation }
+        ],
+        webKeyframes: [
+            { opacity: 1, transform: "translate3d(0, 0, 0) rotate(0deg)" },
+            { opacity: 0.9, transform: `translate3d(${driftX * 0.4}px, 48vh, 0) rotate(${rotation * 0.55}deg)` },
+            { opacity: 0, transform: `translate3d(${driftX}px, 105vh, 0) rotate(${rotation}deg)` }
+        ]
+    });
+    setTimeout(() => confetti.remove(), duration + 80);
 }
 
 async function startMusic() {
@@ -1861,6 +2264,7 @@ async function initPage() {
     initVisualProfile();
     initSkyCanvas();
     initRomanceRenderer();
+    initJavaScriptAnimationRenderer();
     initMotionEngine();
     cleanupLegacySettingsCache();
     await syncSettingsVersion();

@@ -61,6 +61,42 @@ body.js-motion .confetti {
     animation: none !important;
 }
 
+body.js-rendered-motion .gate-countdown,
+body.js-rendered-motion .sky-cloud,
+body.js-rendered-motion .sky-star,
+body.js-rendered-motion .love-mascot,
+body.js-rendered-motion .heart-orbit,
+body.js-rendered-motion .flying-love,
+body.js-rendered-motion .fly-body,
+body.js-rendered-motion .cloud,
+body.js-rendered-motion .wish-text,
+body.js-rendered-motion .swinging,
+body.js-rendered-motion .swinging-reverse,
+body.js-rendered-motion .heart,
+body.js-rendered-motion .confetti,
+body.js-rendered-motion .click-instruction,
+body.js-rendered-motion .hero::before,
+body.js-rendered-motion .hero::after,
+body.js-rendered-motion main > section::before,
+body.js-rendered-motion main > section::after {
+    animation: none !important;
+}
+
+body.js-rendered-motion.rich-motion-device main > section > h2::before,
+body.js-rendered-motion.rich-motion-device .moving-gallery-intro h2::before,
+body.js-rendered-motion.rich-motion-device .curhat-card h2::before,
+body.js-rendered-motion.rich-motion-device main > section > h2::after,
+body.js-rendered-motion.rich-motion-device .moving-gallery-intro h2::after,
+body.js-rendered-motion.rich-motion-device .curhat-card h2::after,
+body.js-rendered-motion.rich-motion-device .memory-card::after,
+body.js-rendered-motion.rich-motion-device .quiz-card::before,
+body.js-rendered-motion.rich-motion-device .meter-card::before,
+body.js-rendered-motion.rich-motion-device .wish-jar::before,
+body.js-rendered-motion.rich-motion-device .video-frame::after,
+body.js-rendered-motion.rich-motion-device .curhat-card::after {
+    content: none !important;
+}
+
 html,
 body {
     max-width: 100%;
@@ -207,6 +243,76 @@ main > section > h2,
     right: -1.05em;
     top: 0.05em;
     animation-delay: -1.7s;
+}
+
+/* TAGLINE: Hiasan yang dibuat JavaScript; CSS hanya menentukan posisi dan ukuran. */
+.js-heading-charm,
+.js-section-charm,
+.js-card-charm {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    color: rgba(0,119,182,0.5);
+    text-shadow: 0 10px 22px rgba(255,255,255,0.9);
+    will-change: transform, opacity;
+}
+
+.js-heading-charm {
+    z-index: -1;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.72em;
+    line-height: 1;
+}
+
+.js-heading-charm.charm-left {
+    left: -1.12em;
+    top: -0.18em;
+}
+
+.js-heading-charm.charm-right {
+    right: -1.05em;
+    top: 0.06em;
+}
+
+.js-section-charm {
+    z-index: -1;
+    font-size: clamp(1.45rem, 3vw, 3.2rem);
+    opacity: 0.34;
+    filter: blur(0.2px);
+}
+
+main > section > .js-section-charm.charm-0 {
+    right: clamp(18px, 8vw, 130px);
+    top: clamp(52px, 18%, 160px);
+}
+
+main > section > .js-section-charm.charm-1 {
+    left: clamp(18px, 9vw, 150px);
+    bottom: clamp(38px, 14%, 120px);
+}
+
+.js-card-charm {
+    z-index: 0;
+    right: 14px;
+    top: 12px;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    opacity: 0.38;
+}
+
+.reason-card > :not(.js-card-charm),
+.memory-card > :not(.js-card-charm),
+.quiz-card > :not(.js-card-charm),
+.meter-card > :not(.js-card-charm),
+.wish-jar > :not(.js-card-charm),
+.video-frame > :not(.js-card-charm),
+.curhat-card > :not(.js-card-charm) {
+    position: relative;
+    z-index: 1;
+}
+
+.low-power-device .js-section-charm,
+.low-power-device .js-card-charm {
+    opacity: 0.24;
 }
 
 .low-power-device main > section::before,
