@@ -1,3 +1,4 @@
+/* TAGLINE: Style utama halaman publik. Warna dikunci light mode agar konsisten di HP gelap/terang. */
 * {
     margin: 0;
     padding: 0;
@@ -150,6 +151,7 @@ main > section:nth-child(even)::after {
     top: 22%;
 }
 
+/* TAGLINE: HERO/COUNTDOWN, area pertama yang mengunci konten sebelum tanggal dibuka. */
 /* --- HERO SECTION (FULL SCREEN) --- */
 .hero {
     min-height: 100vh;
@@ -812,6 +814,7 @@ main > section:nth-child(even)::after {
     font-style: italic; /* Font miring agar estetik */
 }
 
+/* TAGLINE: MOVING GALLERY, ukuran dan gerak utamanya dibantu JavaScript di script.js. */
 /* MOVING GALLERY */
 .moving-gallery-section {
     padding: 54px 0;
@@ -1057,6 +1060,7 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     animation: swing-reverse 5s ease-in-out infinite;
 }
 
+/* TAGLINE: CURHAT, form pesan yang masuk ke D1 dan dibaca dari dashboard. */
 /* --- CURHAT SECTION (PESAN UNTUKMU) --- */
 .curhat-section {
     position: relative;

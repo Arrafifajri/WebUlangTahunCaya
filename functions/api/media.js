@@ -1,3 +1,4 @@
+// TAGLINE: API media upload/download. File besar disimpan di KV, bukan di D1.
 const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
 
 function json(data, init = {}) {

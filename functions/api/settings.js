@@ -1,4 +1,5 @@
 ﻿const SETTINGS_KEY = "birthday-settings";
+// TAGLINE: API settings utama. Dashboard menyimpan JSON besar ke D1 dengan sistem chunk.
 const MAX_SETTINGS_JSON_BYTES = 60_000_000;
 const CHUNK_SIZE = 200_000;
 const CREATE_CHUNK_TABLE_SQL =
@@ -6,6 +7,7 @@ const CREATE_CHUNK_TABLE_SQL =
 const CREATE_LEGACY_TABLE_SQL =
     "CREATE TABLE IF NOT EXISTS site_settings (id TEXT PRIMARY KEY, settings_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)";
 
+// TAGLINE: Tabel chunk dipakai agar settings besar tidak mentok limit kolom tunggal.
 async function ensureSettingsTables(env) {
     await env.SETTINGS_DB.prepare(CREATE_CHUNK_TABLE_SQL).run();
     await env.SETTINGS_DB.prepare(CREATE_LEGACY_TABLE_SQL).run();

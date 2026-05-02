@@ -1,3 +1,4 @@
+// TAGLINE: API versi settings, dipakai frontend untuk membuang cache lokal saat D1 berubah.
 const SETTINGS_KEY = "birthday-settings";
 const CREATE_CHUNK_TABLE_SQL =
     "CREATE TABLE IF NOT EXISTS site_settings_chunks (id TEXT NOT NULL, chunk_index INTEGER NOT NULL, chunk_text TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id, chunk_index))";

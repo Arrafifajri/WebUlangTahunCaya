@@ -1,3 +1,4 @@
+// TAGLINE: API monitoring quiz. Publik POST hasil, dashboard GET dengan password.
 const CREATE_QUIZ_TABLE_SQL =
     "CREATE TABLE IF NOT EXISTS quiz_results (id TEXT PRIMARY KEY, session_id TEXT NOT NULL, score INTEGER NOT NULL, total INTEGER NOT NULL, duration_ms INTEGER NOT NULL, answers_json TEXT NOT NULL, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)";
 const MAX_ANSWERS = 80;

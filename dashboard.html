@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="dashboard.css">
 </head>
 <body class="dashboard-locked">
+    <!-- TAGLINE: Login sederhana, validasi password dilakukan oleh /api/auth. -->
     <section id="loginScreen" class="login-screen">
         <form class="login-card" onsubmit="loginDashboard(event)">
             <p>Birthday Web Control</p>
@@ -37,6 +38,7 @@
         </div>
     </header>
 
+    <!-- TAGLINE: Layout dashboard, sidebar untuk lompat cepat ke editor dan monitoring. -->
     <main class="dashboard-layout">
         <aside class="side-panel">
             <a href="#countdown">Countdown</a>
@@ -124,6 +126,7 @@
                 </div>
             </section>
 
+            <!-- TAGLINE: Semua media besar diupload ke KV, D1 hanya menyimpan URL-nya. -->
             <section id="images" class="panel">
                 <h2>Media Upload</h2>
                 <p class="panel-note">Semua foto dan musik diatur dari dashboard. Upload gambar akan dikompres otomatis sebelum disimpan.</p>
@@ -186,6 +189,7 @@
                 </div>
             </section>
 
+            <!-- TAGLINE: Monitoring quiz dari D1, berguna melihat skor dan jawaban pengunjung. -->
             <section id="monitoring" class="panel">
                 <div class="monitor-heading">
                     <div>
@@ -200,6 +204,7 @@
                 </div>
             </section>
 
+            <!-- TAGLINE: Pesan perasaan dari form publik, tersimpan di D1 dan dibaca admin. -->
             <section id="messages" class="panel">
                 <div class="monitor-heading">
                     <div>

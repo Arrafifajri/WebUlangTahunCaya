@@ -3,10 +3,22 @@
 Project ini sekarang memakai:
 
 - Static frontend: `index.html`, `dashboard.html`, CSS, JS
-- Cloudflare Pages Functions: `functions/api/settings.js`
+- Cloudflare Pages Functions: `functions/api/*.js`
 - Cloudflare D1: menyimpan isi dashboard
 - Cloudflare KV: menyimpan file media upload dari dashboard
 - Secret `ADMIN_PASSWORD`: melindungi tombol simpan dashboard
+
+## Catatan Struktur
+
+File penting:
+
+- `index.html`, `style.css`, `script.js`: halaman publik.
+- `dashboard.html`, `dashboard.css`, `dashboard.js`: dashboard admin.
+- `functions/api/settings.js`: simpan/baca settings dashboard.
+- `functions/api/media.js`: upload/baca media dari KV.
+- `functions/api/quiz-results.js`: simpan hasil quiz dan baca monitoring.
+- `functions/api/feelings.js`: simpan pesan perasaan dan baca dari dashboard.
+- `backup/`: cadangan data, jangan dihapus kalau belum benar-benar yakin.
 
 ## Deploy
 

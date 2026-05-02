@@ -1,4 +1,5 @@
 ﻿const LEGACY_SETTINGS_KEY = "cayaBirthdaySettings";
+// TAGLINE: Script utama halaman publik. Konten berasal dari dashboard/D1, media besar dari KV.
 const SETTINGS_KEY = "cayaBirthdaySettingsLite";
 const SETTINGS_VERSION_KEY = "cayaBirthdaySettingsVersion";
 const defaultSettings = {
@@ -43,6 +44,7 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// TAGLINE: State runtime halaman publik, dipisah supaya alur countdown, musik, dan galeri mudah dilacak.
 let settings = { ...defaultSettings };
 let settingsReady = false;
 let countdownTimer = null;
@@ -64,6 +66,7 @@ function cleanupLegacySettingsCache() {
     }
 }
 
+// TAGLINE: Animasi langit canvas di background halaman publik.
 function initSkyCanvas() {
     if (skyAnimationStarted) return;
     skyAnimationStarted = true;
@@ -207,6 +210,7 @@ function initSkyCanvas() {
     window.addEventListener("resize", resizeSky);
 }
 
+// TAGLINE: Section reveal halus saat pengunjung scroll setelah amplop dibuka.
 function initSkyReveal() {
     if (skyRevealStarted) return;
     skyRevealStarted = true;
@@ -231,6 +235,7 @@ function initSkyReveal() {
     targets.forEach((target) => observer.observe(target));
 }
 
+// TAGLINE: Mesin animasi JavaScript untuk galeri bergerak dan elemen yang perlu gerak natural.
 function initMotionEngine() {
     if (motionEngineStarted) return;
     motionEngineStarted = true;
@@ -412,6 +417,7 @@ function saveSettingsCache(value) {
     }
 }
 
+// TAGLINE: Mengambil settings terbaru dari Cloudflare D1 dengan retry kecil.
 async function loadRemoteSettings() {
     // Retry singkat untuk perangkat yang koneksi mobile-nya tidak stabil.
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -822,6 +828,7 @@ function updateGalleryLayoutVars() {
     gallery.style.setProperty("--gallery-card-radius", `${width < 480 ? 14 : 18}px`);
 }
 
+// TAGLINE: Galeri bergerak memakai pembagian foto yang merata agar ratusan foto kebagian tampil.
 function renderMovingGallery(options = {}) {
     const gallery = document.getElementById("movingGallery");
     if (!gallery) return;
@@ -1039,6 +1046,7 @@ function getEmbeddableVideoUrl(url) {
     return raw;
 }
 
+// TAGLINE: Video penutup mendukung upload KV, link MP4, dan embed YouTube.
 function renderVideoSection() {
     const frame = document.getElementById("videoFrame");
     if (!frame) return;
@@ -1076,6 +1084,7 @@ function renderVideoSection() {
     setupVideoMusicGuard(true);
 }
 
+// TAGLINE: Satu pintu untuk menerapkan data dashboard ke semua elemen halaman.
 function applySettings() {
     setText(".gate-countdown .section-kicker", settings.countdownKicker);
     setText(".gate-countdown h2", settings.countdownTitle);
@@ -1285,6 +1294,7 @@ async function resumeMusicAfterVideo() {
     }
 }
 
+// TAGLINE: Penjaga audio agar musik background tidak tabrakan dengan suara video.
 function setupVideoMusicGuard(hasVideo) {
     const section = document.querySelector(".video-section");
     videoMusicGuardEnabled = Boolean(hasVideo && section);
@@ -1372,6 +1382,7 @@ function unlockPageScroll() {
     window.scrollTo(0, lockedScrollY);
 }
 
+// TAGLINE: Gerbang utama, amplop baru bisa membuka konten setelah tanggal unlock.
 function bukaSurat() {
     if (isOpeningEnvelope) return;
 
@@ -1483,6 +1494,7 @@ async function submitQuizResult() {
     }
 }
 
+// TAGLINE: Mini quiz publik, hasil akhirnya disimpan ke D1 untuk monitoring dashboard.
 function renderQuiz() {
     const questionElement = document.getElementById("quizQuestion");
     const optionsElement = document.getElementById("quizOptions");
@@ -1652,6 +1664,7 @@ function closeModalOnBackdrop(event, id) {
     }
 }
 
+// TAGLINE: Form perasaan, disimpan ke D1 dan dibaca lewat dashboard.
 async function kirimPesan() {
     if (!isBirthdayUnlocked()) return;
 
@@ -1691,7 +1704,7 @@ async function kirimPesan() {
         const statusText = "Pesan kamu sudah tersimpan. Nanti aku baca dari dashboard.";
 
         localStorage.setItem("pesanUltahCayaStatus", statusText);
-        localStorage.setItem("pesanUltahCaya", pesan);
+        localStorage.removeItem("pesanUltahCaya");
         textarea.value = "";
         updateCurhatCounter();
         renderLastMessage();

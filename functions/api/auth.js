@@ -1,3 +1,4 @@
+// TAGLINE: API login dashboard, hanya mengecek ADMIN_PASSWORD dari Cloudflare Secret.
 function json(data, init = {}) {
     return new Response(JSON.stringify(data), {
         ...init,

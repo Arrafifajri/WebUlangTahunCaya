@@ -1,5 +1,7 @@
+// TAGLINE: Script dashboard admin. Semua perubahan konten dikumpulkan di sini lalu disimpan ke D1/KV.
 const SETTINGS_KEY = "cayaBirthdaySettings";
 const ADMIN_SESSION_KEY = "cayaDashboardPassword";
+// TAGLINE: currentSettings adalah draft lokal dashboard sebelum tombol Simpan ditekan.
 let currentSettings;
 
 const defaultSettings = {
@@ -94,6 +96,7 @@ async function verifyPassword(password) {
     }
 }
 
+// TAGLINE: Login dashboard memakai secret ADMIN_PASSWORD dari Cloudflare.
 async function loginDashboard(event) {
     event.preventDefault();
     const password = $("loginPassword").value;
@@ -120,6 +123,7 @@ function logoutDashboard() {
     $("loginStatus").textContent = "Kamu sudah logout.";
 }
 
+// TAGLINE: Ambil settings aktif dari D1, dipakai saat dashboard pertama dibuka.
 async function getSavedSettings() {
     const response = await fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) {
@@ -283,6 +287,7 @@ function normalizeMovingGalleryTitle(item) {
     return item;
 }
 
+// TAGLINE: Isi semua field dashboard dari currentSettings dan render editor GUI.
 async function fillForm() {
     let data;
     try {
@@ -324,6 +329,7 @@ async function fillForm() {
     renderGuiEditors();
 }
 
+// TAGLINE: Kumpulkan seluruh nilai form menjadi payload yang siap disimpan.
 function collectSettings() {
     const videoLink = $("videoSrc").value.trim();
     const gallerySpeed = Math.min(2.5, Math.max(0.5, Number($("movingGallerySpeed").value) || 1));
@@ -364,6 +370,7 @@ function collectSettings() {
     };
 }
 
+// TAGLINE: Simpan pengaturan ke D1; media besar sudah berupa URL dari KV.
 async function saveSettings() {
     const status = $("statusText");
 
@@ -402,6 +409,7 @@ async function saveSettings() {
     }
 }
 
+// TAGLINE: Upload media dashboard ke Cloudflare KV agar D1 tetap ringan.
 async function uploadMediaToKv(dataUrl, filename, kind) {
     const response = await fetch("/api/media", {
         method: "POST",
@@ -563,6 +571,7 @@ async function uploadMovingGalleryImages(event) {
     $("statusText").style.color = "#075985";
 }
 
+// TAGLINE: Render semua editor berulang seperti foto, timeline, quiz, dan galeri.
 function renderGuiEditors() {
     currentSettings.littleThings ||= [];
     currentSettings.detailedTimeline ||= [];
@@ -892,6 +901,7 @@ function renderQuizResults(results) {
     });
 }
 
+// TAGLINE: Monitoring jawaban quiz yang dikirim dari halaman publik.
 async function loadQuizResults() {
     const target = $("quizResultsMonitor");
     const password = getAdminPassword();
@@ -956,6 +966,7 @@ function renderFeelingMessages(messages) {
     });
 }
 
+// TAGLINE: Monitoring pesan perasaan yang tersimpan di D1.
 async function loadFeelingMessages() {
     const target = $("feelingMessagesMonitor");
     const password = getAdminPassword();

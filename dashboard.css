@@ -1,3 +1,4 @@
+/* TAGLINE: Style dashboard admin, dibuat padat dan responsif untuk desktop maupun HP. */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -144,6 +145,7 @@ button {
     transform: translateY(-2px);
 }
 
+/* TAGLINE: Layout dashboard, sidebar sticky di desktop dan horizontal di HP. */
 .dashboard-layout {
     display: grid;
     grid-template-columns: 210px minmax(0, 1fr);
@@ -507,6 +509,7 @@ textarea:focus {
     line-height: 1.6;
 }
 
+/* TAGLINE: Kartu monitoring untuk quiz dan pesan yang dibaca dari D1. */
 .monitor-summary {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

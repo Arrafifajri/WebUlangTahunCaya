@@ -1,3 +1,5 @@
+// TAGLINE: API pesan perasaan. Publik POST pesan, dashboard GET dengan password.
+// Catatan: nama kolom wa_status/wa_detail dipertahankan agar D1 lama tetap kompatibel.
 const CREATE_FEELINGS_TABLE_SQL =
     "CREATE TABLE IF NOT EXISTS feeling_messages (id TEXT PRIMARY KEY, message TEXT NOT NULL, wa_status TEXT NOT NULL, wa_detail TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)";
 const MAX_MESSAGE_LENGTH = 1200;
