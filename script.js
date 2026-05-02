@@ -1011,9 +1011,9 @@ function renderLetterAndSurprise() {
     setText(".surprise-modal strong", settings.surpriseStrong);
 
     const defaultCurhatTitle = "Kalau hati kamu mau cerita \uD83D\uDC8C";
-    const defaultCurhatPrompt = "Tulis perasaan kamu di sini. Nanti pesannya masuk langsung ke WhatsApp aku lewat bot kecil di balik web ini.";
+    const defaultCurhatPrompt = "Tulis perasaan kamu di sini. Nanti pesannya tersimpan rapi dan cuma bisa aku baca dari dashboard.";
     const oldCurhatTitle = /^pesan untukmu/i.test(String(settings.curhatTitle || "").trim());
-    const oldCurhatPrompt = /kalo ada yang mau diungkapin/i.test(String(settings.curhatPrompt || "").trim());
+    const oldCurhatPrompt = /kalo ada yang mau diungkapin|whatsapp|bot/i.test(String(settings.curhatPrompt || "").trim());
     setText(".curhat-section h2", oldCurhatTitle ? defaultCurhatTitle : (settings.curhatTitle || defaultCurhatTitle));
     setText(".curhat-intro", oldCurhatPrompt ? defaultCurhatPrompt : (settings.curhatPrompt || defaultCurhatPrompt));
 }
@@ -1688,9 +1688,7 @@ async function kirimPesan() {
             throw new Error(result.error || "Pesan belum bisa dikirim.");
         }
 
-        const statusText = result.whatsappSent
-            ? "Pesan kamu sudah terkirim ke WhatsApp aku."
-            : "Pesan kamu sudah tersimpan. Bot WhatsApp tinggal diaktifkan di Cloudflare.";
+        const statusText = "Pesan kamu sudah tersimpan. Nanti aku baca dari dashboard.";
 
         localStorage.setItem("pesanUltahCayaStatus", statusText);
         localStorage.setItem("pesanUltahCaya", pesan);
@@ -1705,7 +1703,7 @@ async function kirimPesan() {
     } finally {
         if (button) {
             button.disabled = false;
-            button.textContent = "Kirim ke WhatsApp Aku";
+            button.textContent = "Simpan Pesan";
         }
     }
 }

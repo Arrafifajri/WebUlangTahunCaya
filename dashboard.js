@@ -68,8 +68,8 @@ const defaultSettings = {
     videoText: "Simpan video kecil yang paling kamu suka di sini.",
     videoSrc: "",
     videoName: "",
-    curhatTitle: "Pesan Untukmu 💌",
-    curhatPrompt: "Kalo ada yang mau diungkapin, tulis di bawah ya sayang..."
+    curhatTitle: "Kalau hati kamu mau cerita 💌",
+    curhatPrompt: "Tulis perasaan kamu di sini. Nanti pesannya tersimpan rapi dan cuma bisa aku baca dari dashboard."
 };
 
 function $(id) {
@@ -107,6 +107,7 @@ async function loginDashboard(event) {
         status.textContent = "";
         await fillForm();
         await loadQuizResults();
+        await loadFeelingMessages();
     } catch (error) {
         status.textContent = error.message;
     }
@@ -296,6 +297,12 @@ async function fillForm() {
     }
     currentSettings = structuredClone(data);
     currentSettings.movingGallery = (currentSettings.movingGallery || []).map(normalizeMovingGalleryTitle);
+    if (/^pesan untukmu/i.test(String(currentSettings.curhatTitle || "").trim())) {
+        currentSettings.curhatTitle = defaultSettings.curhatTitle;
+    }
+    if (/kalo ada yang mau diungkapin|whatsapp|bot/i.test(String(currentSettings.curhatPrompt || "").trim())) {
+        currentSettings.curhatPrompt = defaultSettings.curhatPrompt;
+    }
 
     Object.entries(currentSettings).forEach(([key, value]) => {
         const field = $(key);
@@ -915,6 +922,69 @@ async function loadQuizResults() {
     }
 }
 
+function renderFeelingMessages(messages) {
+    const target = $("feelingMessagesMonitor");
+    if (!target) return;
+
+    target.innerHTML = "";
+    if (!messages.length) {
+        target.appendChild(createTextElement("p", "empty-monitor", "Belum ada pesan perasaan yang masuk."));
+        return;
+    }
+
+    messages.forEach((item, index) => {
+        const card = document.createElement("article");
+        card.className = "feeling-message-card";
+
+        const head = document.createElement("div");
+        head.className = "feeling-message-head";
+        head.append(
+            createTextElement("h3", "", `Pesan ${index + 1}`),
+            createTextElement("span", "", formatMonitorDate(item.createdAt))
+        );
+
+        const text = createTextElement("p", "feeling-message-text", item.message || "-");
+        const meta = document.createElement("div");
+        meta.className = "quiz-result-meta";
+        meta.append(
+            createTextElement("span", "", "Tersimpan di D1"),
+            createTextElement("span", "", item.userAgent ? "Device terbaca" : "Device kosong")
+        );
+
+        card.append(head, text, meta);
+        target.appendChild(card);
+    });
+}
+
+async function loadFeelingMessages() {
+    const target = $("feelingMessagesMonitor");
+    const password = getAdminPassword();
+    if (!target || !password) return;
+
+    try {
+        target.innerHTML = "";
+        target.appendChild(createTextElement("p", "empty-monitor", "Mengambil pesan perasaan..."));
+
+        const response = await fetch(`/api/feelings?t=${Date.now()}`, {
+            headers: {
+                "x-admin-password": password
+            },
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            const result = await response.json().catch(() => ({ error: "Gagal membaca pesan perasaan." }));
+            throw new Error(`${result.error || "Gagal membaca pesan perasaan."}${result.detail ? ` ${result.detail}` : ""}`);
+        }
+
+        const data = await response.json();
+        renderFeelingMessages(Array.isArray(data.messages) ? data.messages : []);
+    } catch (error) {
+        target.innerHTML = "";
+        target.appendChild(createTextElement("p", "empty-monitor error-monitor", error.message));
+    }
+}
+
 function uploadMusic(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1005,7 +1075,10 @@ if (getAdminPassword()) {
             document.body.classList.remove("dashboard-locked");
             return fillForm();
         })
-        .then(loadQuizResults)
+        .then(async () => {
+            await loadQuizResults();
+            await loadFeelingMessages();
+        })
         .catch(() => {
             sessionStorage.removeItem(ADMIN_SESSION_KEY);
             document.body.classList.add("dashboard-locked");

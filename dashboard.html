@@ -45,6 +45,7 @@
             <a href="#images">Gambar</a>
             <a href="#interactive">Interaktif</a>
             <a href="#monitoring">Monitoring</a>
+            <a href="#messages">Pesan</a>
             <a href="#ending">Ending</a>
         </aside>
 
@@ -196,6 +197,19 @@
                 <div id="quizMonitorSummary" class="monitor-summary"></div>
                 <div id="quizResultsMonitor" class="monitor-list">
                     <p class="empty-monitor">Belum ada data quiz yang masuk.</p>
+                </div>
+            </section>
+
+            <section id="messages" class="panel">
+                <div class="monitor-heading">
+                    <div>
+                        <h2>Pesan Perasaan</h2>
+                        <p class="panel-note">Semua pesan dari form terakhir akan masuk ke D1 dan bisa kamu baca di sini.</p>
+                    </div>
+                    <button type="button" class="ghost-button" onclick="loadFeelingMessages()">Refresh</button>
+                </div>
+                <div id="feelingMessagesMonitor" class="monitor-list">
+                    <p class="empty-monitor">Belum ada pesan perasaan yang masuk.</p>
                 </div>
             </section>
 

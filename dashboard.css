@@ -641,6 +641,47 @@ textarea:focus {
     font-weight: 700;
 }
 
+.feeling-message-card {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #cfe8f8;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 92% 0%, rgba(186,230,253,0.45), transparent 12rem),
+        #f8fcff;
+    box-shadow: 0 12px 28px rgba(0,119,182,0.07);
+}
+
+.feeling-message-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.feeling-message-head h3 {
+    color: #075985;
+    font-size: 1rem;
+}
+
+.feeling-message-head span {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+.feeling-message-text {
+    padding: 14px;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #17324d;
+    font-weight: 700;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+
 /* Compact media editors */
 .panel .card-editor:not(.gallery-strip-editor) {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -813,6 +854,14 @@ textarea:focus {
 
     .quiz-result-head {
         display: grid;
+    }
+
+    .feeling-message-head {
+        display: grid;
+    }
+
+    .feeling-message-head span {
+        text-align: left;
     }
 
     .quiz-score-badge {
