@@ -1009,8 +1009,13 @@ function renderLetterAndSurprise() {
     setText(".surprise-modal h2", settings.surpriseTitle);
     setText(".surprise-modal p", settings.surpriseText);
     setText(".surprise-modal strong", settings.surpriseStrong);
-    setText(".curhat-section h2", settings.curhatTitle);
-    setText(".curhat-section > p", settings.curhatPrompt);
+
+    const defaultCurhatTitle = "Kalau hati kamu mau cerita \uD83D\uDC8C";
+    const defaultCurhatPrompt = "Tulis perasaan kamu di sini. Nanti pesannya masuk langsung ke WhatsApp aku lewat bot kecil di balik web ini.";
+    const oldCurhatTitle = /^pesan untukmu/i.test(String(settings.curhatTitle || "").trim());
+    const oldCurhatPrompt = /kalo ada yang mau diungkapin/i.test(String(settings.curhatPrompt || "").trim());
+    setText(".curhat-section h2", oldCurhatTitle ? defaultCurhatTitle : (settings.curhatTitle || defaultCurhatTitle));
+    setText(".curhat-intro", oldCurhatPrompt ? defaultCurhatPrompt : (settings.curhatPrompt || defaultCurhatPrompt));
 }
 
 function getEmbeddableVideoUrl(url) {
@@ -1647,10 +1652,12 @@ function closeModalOnBackdrop(event, id) {
     }
 }
 
-function kirimPesan() {
+async function kirimPesan() {
     if (!isBirthdayUnlocked()) return;
 
     const textarea = document.getElementById("pesanCurhat");
+    const button = document.getElementById("curhatSendButton");
+    const lastMessage = document.getElementById("lastMessage");
     const pesan = textarea.value.trim();
 
     if (pesan === "") {
@@ -1658,19 +1665,68 @@ function kirimPesan() {
         return;
     }
 
-    localStorage.setItem("pesanUltahCaya", pesan);
-    textarea.value = "";
-    renderLastMessage();
-    alert("Pesan kamu sudah sampai di hati aku! \u2764\uFE0F");
+    try {
+        if (button) {
+            button.disabled = true;
+            button.textContent = "Mengirim...";
+        }
+        if (lastMessage) {
+            lastMessage.textContent = "Sebentar ya, pesannya lagi dikirim pelan-pelan...";
+            lastMessage.classList.remove("is-error");
+        }
+
+        const response = await fetch("/api/feelings", {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({ message: pesan })
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok && response.status !== 202) {
+            throw new Error(result.error || "Pesan belum bisa dikirim.");
+        }
+
+        const statusText = result.whatsappSent
+            ? "Pesan kamu sudah terkirim ke WhatsApp aku."
+            : "Pesan kamu sudah tersimpan. Bot WhatsApp tinggal diaktifkan di Cloudflare.";
+
+        localStorage.setItem("pesanUltahCayaStatus", statusText);
+        localStorage.setItem("pesanUltahCaya", pesan);
+        textarea.value = "";
+        updateCurhatCounter();
+        renderLastMessage();
+    } catch (error) {
+        if (lastMessage) {
+            lastMessage.textContent = `${error.message} Coba kirim sekali lagi ya.`;
+            lastMessage.classList.add("is-error");
+        }
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Kirim ke WhatsApp Aku";
+        }
+    }
 }
 
 function renderLastMessage() {
     const lastMessage = document.getElementById("lastMessage");
-    const savedMessage = localStorage.getItem("pesanUltahCaya");
+    if (!lastMessage) return;
 
-    if (savedMessage) {
-        lastMessage.textContent = `Pesan terakhir: "${savedMessage}"`;
+    const savedStatus = localStorage.getItem("pesanUltahCayaStatus");
+    if (savedStatus) {
+        lastMessage.textContent = savedStatus;
+        lastMessage.classList.remove("is-error");
     }
+}
+
+function updateCurhatCounter() {
+    const textarea = document.getElementById("pesanCurhat");
+    const counter = document.getElementById("curhatCounter");
+    if (!textarea || !counter) return;
+
+    counter.textContent = `${textarea.value.length}/1200`;
 }
 
 document.addEventListener("keydown", (event) => {
@@ -1682,6 +1738,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("resize", fitEnvelopeLetter);
+document.getElementById("pesanCurhat")?.addEventListener("input", updateCurhatCounter);
 
 async function initPage() {
     initSkyCanvas();

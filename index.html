@@ -263,12 +263,19 @@
         </section>
 
         <section class="curhat-section" data-aos="fade-up">
-            <h2>Pesan Untukmu &#128140;</h2>
-            <p>Kalo ada yang mau diungkapin, tulis di bawah ya sayang...</p>
-            <div class="curhat-box">
-                <textarea id="pesanCurhat" rows="5" placeholder="Tulis sesuatu yang romantis..."></textarea>
-                <button type="button" onclick="kirimPesan()">Kirim Pesan</button>
-                <p id="lastMessage" class="last-message"></p>
+            <div class="curhat-card">
+                <p class="section-kicker">Pesan rahasia</p>
+                <h2>Kalau hati kamu mau cerita &#128140;</h2>
+                <p class="curhat-intro">Tulis perasaan kamu di sini. Nanti pesannya masuk langsung ke WhatsApp aku lewat bot kecil di balik web ini.</p>
+                <div class="curhat-box">
+                    <label class="sr-only" for="pesanCurhat">Tulis perasaan kamu</label>
+                    <textarea id="pesanCurhat" rows="6" maxlength="1200" placeholder="Tulis yang kamu rasain sekarang... boleh manis, malu-malu, panjang juga boleh."></textarea>
+                    <div class="curhat-actions">
+                        <span id="curhatCounter">0/1200</span>
+                        <button id="curhatSendButton" type="button" onclick="kirimPesan()">Kirim ke WhatsApp Aku</button>
+                    </div>
+                    <p id="lastMessage" class="last-message" role="status"></p>
+                </div>
             </div>
         </section>
     </main>
