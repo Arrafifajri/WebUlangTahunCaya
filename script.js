@@ -486,6 +486,12 @@ let quizStartedAt = null;
 let quizAnswers = [];
 let quizSubmitted = false;
 let carouselIndex = 0;
+let videoMusicZoneActive = false;
+let musicShouldResumeAfterVideo = false;
+let musicFadeFrame = null;
+let videoMusicObserver = null;
+let videoMusicFallbackHandler = null;
+const musicDefaultVolume = 1;
 
 if (window.AOS) {
     AOS.init({
@@ -1034,6 +1040,7 @@ function renderVideoSection() {
     const src = getEmbeddableVideoUrl(settings.videoSrc);
     if (!src) {
         frame.innerHTML = `<div class="video-placeholder">Video akan muncul di sini</div>`;
+        setupVideoMusicGuard(false);
         return;
     }
 
@@ -1043,7 +1050,9 @@ function renderVideoSection() {
         video.controls = true;
         video.playsInline = true;
         video.preload = "metadata";
+        video.addEventListener("play", () => pauseMusicForVideo(true));
         frame.appendChild(video);
+        setupVideoMusicGuard(true);
         return;
     }
 
@@ -1054,6 +1063,7 @@ function renderVideoSection() {
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
     iframe.allowFullscreen = true;
     frame.appendChild(iframe);
+    setupVideoMusicGuard(true);
 }
 
 function applySettings() {
@@ -1139,6 +1149,7 @@ function createConfettiPiece() {
 
 async function startMusic() {
     if (!music) return;
+    if (videoMusicZoneActive) return;
     const selectedSrc = music.currentSrc || music.getAttribute("src") || musicSource?.getAttribute("src") || "";
     if (!selectedSrc) return;
 
@@ -1162,12 +1173,132 @@ async function startMusic() {
     try {
         music.loop = true;
         music.muted = false;
+        music.volume = musicDefaultVolume;
         await ensurePlayable();
         await music.play();
     } catch (error) {
         // Browser bisa menolak pemutaran bila interaksi dianggap belum valid.
         // Musik akan dicoba lagi pada interaksi berikutnya (klik amplop/kejutan).
     }
+}
+
+function stopMusicFade() {
+    if (musicFadeFrame) {
+        cancelAnimationFrame(musicFadeFrame);
+        musicFadeFrame = null;
+    }
+}
+
+function fadeMusicVolume(targetVolume, duration = 420, onDone) {
+    if (!music) return;
+
+    stopMusicFade();
+    const startVolume = Number.isFinite(music.volume) ? music.volume : musicDefaultVolume;
+    const startedAt = performance.now();
+
+    function tick(time) {
+        const progress = Math.min(1, (time - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        music.volume = startVolume + (targetVolume - startVolume) * eased;
+
+        if (progress < 1) {
+            musicFadeFrame = requestAnimationFrame(tick);
+            return;
+        }
+
+        music.volume = targetVolume;
+        musicFadeFrame = null;
+        if (onDone) onDone();
+    }
+
+    musicFadeFrame = requestAnimationFrame(tick);
+}
+
+function pauseMusicForVideo(keepResumeFlag = false) {
+    if (!music) return;
+    videoMusicZoneActive = true;
+
+    if (!music.paused && !music.ended) {
+        musicShouldResumeAfterVideo = true;
+    } else if (!keepResumeFlag) {
+        musicShouldResumeAfterVideo = false;
+    }
+
+    if (music.paused) return;
+    fadeMusicVolume(0, 360, () => {
+        music.pause();
+        music.volume = musicDefaultVolume;
+    });
+}
+
+async function resumeMusicAfterVideo() {
+    if (!music) return;
+    videoMusicZoneActive = false;
+
+    if (!musicShouldResumeAfterVideo) return;
+    musicShouldResumeAfterVideo = false;
+    if (!isBirthdayUnlocked() || !document.body.classList.contains("envelope-open")) return;
+
+    stopMusicFade();
+    music.volume = 0;
+    try {
+        const selectedSrc = music.currentSrc || music.getAttribute("src") || musicSource?.getAttribute("src") || "";
+        if (!selectedSrc) return;
+        music.loop = true;
+        music.muted = false;
+        await music.play();
+        fadeMusicVolume(musicDefaultVolume, 520);
+    } catch (error) {
+        music.volume = musicDefaultVolume;
+    }
+}
+
+function setupVideoMusicGuard(hasVideo) {
+    const section = document.querySelector(".video-section");
+    if (videoMusicObserver) {
+        videoMusicObserver.disconnect();
+        videoMusicObserver = null;
+    }
+    if (videoMusicFallbackHandler) {
+        window.removeEventListener("scroll", videoMusicFallbackHandler);
+        window.removeEventListener("resize", videoMusicFallbackHandler);
+        videoMusicFallbackHandler = null;
+    }
+
+    if (!section || !hasVideo) {
+        if (videoMusicZoneActive) resumeMusicAfterVideo();
+        return;
+    }
+
+    function setVideoZone(active) {
+        if (active) {
+            pauseMusicForVideo();
+        } else if (videoMusicZoneActive) {
+            resumeMusicAfterVideo();
+        }
+    }
+
+    if ("IntersectionObserver" in window) {
+        videoMusicObserver = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            setVideoZone(Boolean(entry?.isIntersecting));
+        }, {
+            root: null,
+            rootMargin: "45% 0px 45% 0px",
+            threshold: 0.01
+        });
+        videoMusicObserver.observe(section);
+        return;
+    }
+
+    videoMusicFallbackHandler = () => {
+        const rect = section.getBoundingClientRect();
+        const buffer = window.innerHeight * 0.45;
+        setVideoZone(rect.top < window.innerHeight + buffer && rect.bottom > -buffer);
+    };
+    window.addEventListener("scroll", videoMusicFallbackHandler, { passive: true });
+    window.addEventListener("resize", videoMusicFallbackHandler);
+    videoMusicFallbackHandler();
 }
 
 function goToSection(selector) {
