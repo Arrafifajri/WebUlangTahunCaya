@@ -169,6 +169,74 @@ main > section:nth-child(even)::after {
     top: 22%;
 }
 
+/* TAGLINE: Hiasan section otomatis, aktif lebih hidup di device kuat dan tetap ringan di HP rendah. */
+main > section > h2,
+.moving-gallery-intro h2,
+.curhat-card h2 {
+    position: relative;
+    display: inline-block;
+}
+
+.rich-motion-device main > section > h2::before,
+.rich-motion-device .moving-gallery-intro h2::before,
+.rich-motion-device .curhat-card h2::before,
+.rich-motion-device main > section > h2::after,
+.rich-motion-device .moving-gallery-intro h2::after,
+.rich-motion-device .curhat-card h2::after {
+    position: absolute;
+    pointer-events: none;
+    color: rgba(0,119,182,0.52);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.7em;
+    text-shadow: 0 8px 18px rgba(255,255,255,0.9);
+    animation: headingCharm 3.8s ease-in-out infinite;
+}
+
+.rich-motion-device main > section > h2::before,
+.rich-motion-device .moving-gallery-intro h2::before,
+.rich-motion-device .curhat-card h2::before {
+    content: "♡";
+    left: -1.1em;
+    top: -0.18em;
+}
+
+.rich-motion-device main > section > h2::after,
+.rich-motion-device .moving-gallery-intro h2::after,
+.rich-motion-device .curhat-card h2::after {
+    content: "✦";
+    right: -1.05em;
+    top: 0.05em;
+    animation-delay: -1.7s;
+}
+
+.low-power-device main > section::before,
+.low-power-device main > section::after {
+    animation: none !important;
+    filter: none;
+    opacity: 0.42;
+}
+
+.low-power-device .gate-countdown,
+.low-power-device .love-mascot,
+.low-power-device .heart-orbit,
+.low-power-device .flying-love,
+.low-power-device .swinging,
+.low-power-device .swinging-reverse {
+    animation-duration: 12s !important;
+}
+
+.low-power-device .gallery-track-right,
+.low-power-device .gallery-track-left,
+.low-power-device .gallery-track-slow {
+    animation-duration: 58s !important;
+}
+
+.low-power-device .gate-countdown,
+.low-power-device .curhat-card,
+.low-power-device .modal-content {
+    backdrop-filter: none;
+}
+
 /* TAGLINE: HERO/COUNTDOWN, area pertama yang mengunci konten sebelum tanggal dibuka. */
 /* --- HERO SECTION (FULL SCREEN) --- */
 .hero {
@@ -603,6 +671,16 @@ main > section:nth-child(even)::after {
 @keyframes twinkle {
     0%, 100% { transform: scale(0.65); opacity: 0.45; }
     50% { transform: scale(1.25); opacity: 1; }
+}
+
+@keyframes headingCharm {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg) scale(0.9); opacity: 0.55; }
+    50% { transform: translate3d(0, -8px, 0) rotate(8deg) scale(1.12); opacity: 1; }
+}
+
+@keyframes containerCharm {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-5deg) scale(0.96); opacity: 0.72; }
+    50% { transform: translate3d(0, -8px, 0) rotate(6deg) scale(1.08); opacity: 1; }
 }
 
 @keyframes mascotFloat {
@@ -1230,6 +1308,15 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     backdrop-filter: blur(14px);
 }
 
+.rich-motion-device .curhat-card::after {
+    content: "✉";
+    right: clamp(16px, 4vw, 34px);
+    top: clamp(16px, 4vw, 30px);
+    width: 38px;
+    height: 38px;
+    animation-delay: -3s;
+}
+
 .curhat-section h2 {
     font-size: clamp(2rem, 6vw, 3.2rem);
     margin-bottom: 12px;
@@ -1492,6 +1579,8 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 }
 
 .memory-card {
+    position: relative;
+    overflow: hidden;
     min-height: 150px;
     padding: 24px;
     border-radius: 20px;
@@ -1500,6 +1589,32 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     box-shadow: 0 12px 30px rgba(0,119,182,0.08);
     text-align: left;
     transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.rich-motion-device .memory-card::after,
+.rich-motion-device .quiz-card::before,
+.rich-motion-device .meter-card::before,
+.rich-motion-device .wish-jar::before,
+.rich-motion-device .video-frame::after,
+.rich-motion-device .curhat-card::after {
+    content: "♡";
+    position: absolute;
+    pointer-events: none;
+    display: grid;
+    place-items: center;
+    color: rgba(0,119,182,0.42);
+    background: rgba(255,255,255,0.52);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 999px;
+    box-shadow: 0 12px 26px rgba(0,119,182,0.08);
+    animation: containerCharm 5.6s ease-in-out infinite;
+}
+
+.rich-motion-device .memory-card::after {
+    right: 14px;
+    top: 14px;
+    width: 30px;
+    height: 30px;
 }
 
 .memory-card:hover {
@@ -1578,8 +1693,18 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 }
 
 .wish-jar {
+    position: relative;
     max-width: 620px;
     margin: 0 auto;
+}
+
+.rich-motion-device .wish-jar::before {
+    content: "✦";
+    right: 16%;
+    top: 10px;
+    width: 34px;
+    height: 34px;
+    animation-delay: -1.4s;
 }
 
 .jar-button {
@@ -1721,9 +1846,29 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 
 .meter-card,
 .quiz-card {
+    position: relative;
+    overflow: hidden;
     max-width: 680px;
     margin: 0 auto;
     padding: 28px;
+}
+
+.rich-motion-device .quiz-card::before {
+    content: "💙";
+    right: 18px;
+    top: 18px;
+    width: 38px;
+    height: 38px;
+    font-size: 1.05rem;
+}
+
+.rich-motion-device .meter-card::before {
+    content: "∞";
+    right: 20px;
+    top: 18px;
+    width: 38px;
+    height: 38px;
+    font-weight: 900;
 }
 
 .meter-track {
@@ -1869,6 +2014,7 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 }
 
 .video-frame {
+    position: relative;
     width: min(94vw, 860px);
     aspect-ratio: 16 / 9;
     margin: 0 auto;
@@ -1878,6 +2024,16 @@ body.js-motion .gallery-line:focus-within .gallery-track {
         linear-gradient(135deg, rgba(224,247,255,0.9), rgba(255,255,255,0.96));
     border: 1px solid rgba(255,255,255,0.86);
     box-shadow: 0 24px 60px rgba(2,62,138,0.16);
+}
+
+.rich-motion-device .video-frame::after {
+    content: "▶";
+    right: 18px;
+    top: 18px;
+    width: 42px;
+    height: 42px;
+    color: #0077b6;
+    animation-delay: -2.4s;
 }
 
 .video-frame iframe,

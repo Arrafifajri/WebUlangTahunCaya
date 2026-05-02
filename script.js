@@ -57,6 +57,11 @@ let galleryRenderSeed = Date.now();
 let galleryMotionVersion = 0;
 let galleryShuffleRound = 0;
 let galleryReshuffleQueued = false;
+let visualProfile = {
+    reduceMotion: false,
+    lowPower: false,
+    richMotion: true
+};
 
 function cleanupLegacySettingsCache() {
     try {
@@ -64,6 +69,27 @@ function cleanupLegacySettingsCache() {
     } catch (error) {
         // Kalau storage browser sedang penuh/bermasalah, flow utama tetap lanjut ambil D1.
     }
+}
+
+// TAGLINE: Profil visual otomatis, HP kentang dapat animasi lebih ringan tanpa kehilangan suasana.
+function initVisualProfile() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const saveData = Boolean(connection?.saveData);
+    const slowNetwork = /(^2g$|slow-2g)/i.test(String(connection?.effectiveType || ""));
+    const lowMemory = Number(navigator.deviceMemory || 4) <= 2;
+    const lowCpu = Number(navigator.hardwareConcurrency || 4) <= 2;
+    const smallViewport = Math.min(window.innerWidth || 360, window.innerHeight || 640) < 390;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    visualProfile = {
+        reduceMotion,
+        lowPower: reduceMotion || saveData || slowNetwork || lowMemory || lowCpu || smallViewport,
+        richMotion: !(reduceMotion || saveData || slowNetwork || lowMemory || lowCpu || smallViewport)
+    };
+
+    document.body.classList.toggle("reduce-motion-device", visualProfile.reduceMotion);
+    document.body.classList.toggle("low-power-device", visualProfile.lowPower);
+    document.body.classList.toggle("rich-motion-device", visualProfile.richMotion);
 }
 
 // TAGLINE: Animasi langit canvas di background halaman publik.
@@ -75,11 +101,13 @@ function initSkyCanvas() {
     if (!canvas) return;
 
     const context = canvas.getContext("2d");
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = visualProfile.reduceMotion;
+    const lowPower = visualProfile.lowPower;
+    let lastSkyFrame = 0;
     const state = {
         width: 0,
         height: 0,
-        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        dpr: lowPower ? 1 : Math.min(window.devicePixelRatio || 1, 2),
         clouds: [],
         sparkles: [],
         flyer: { x: -120, y: 120, speed: 0.42, phase: 0 }
@@ -88,14 +116,17 @@ function initSkyCanvas() {
     function resizeSky() {
         state.width = window.innerWidth;
         state.height = window.innerHeight;
-        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        state.dpr = lowPower ? 1 : Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = Math.floor(state.width * state.dpr);
         canvas.height = Math.floor(state.height * state.dpr);
         canvas.style.width = `${state.width}px`;
         canvas.style.height = `${state.height}px`;
         context.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
 
-        state.clouds = Array.from({ length: state.width < 600 ? 7 : 11 }, (_, index) => ({
+        const cloudCount = lowPower ? (state.width < 600 ? 3 : 5) : (state.width < 600 ? 7 : 11);
+        const sparkleCount = lowPower ? (state.width < 600 ? 8 : 14) : (state.width < 600 ? 24 : 42);
+
+        state.clouds = Array.from({ length: cloudCount }, (_, index) => ({
             x: Math.random() * state.width,
             y: 40 + Math.random() * state.height * 0.62,
             scale: 0.45 + Math.random() * 0.9,
@@ -105,7 +136,7 @@ function initSkyCanvas() {
             index
         }));
 
-        state.sparkles = Array.from({ length: state.width < 600 ? 24 : 42 }, () => ({
+        state.sparkles = Array.from({ length: sparkleCount }, () => ({
             x: Math.random() * state.width,
             y: Math.random() * state.height * 0.72,
             radius: 0.8 + Math.random() * 1.8,
@@ -171,7 +202,12 @@ function initSkyCanvas() {
         context.restore();
     }
 
-    function renderSky() {
+    function renderSky(time = 0) {
+        if (lowPower && !reduceMotion && time - lastSkyFrame < 72) {
+            requestAnimationFrame(renderSky);
+            return;
+        }
+        lastSkyFrame = time;
         context.clearRect(0, 0, state.width, state.height);
         context.fillStyle = "rgba(240,248,255,0.02)";
         context.fillRect(0, 0, state.width, state.height);
@@ -213,13 +249,16 @@ function initSkyCanvas() {
 // TAGLINE: Renderer love ringan, membuat hati/emoji melayang tanpa mengganggu klik.
 function initRomanceRenderer() {
     const layer = document.getElementById("romanceRenderer");
-    if (!layer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!layer || visualProfile.reduceMotion) return;
 
     const symbols = ["\u2661", "\u2665", "\uD83D\uDC99", "\uD83E\uDD0D", "\u2728"];
     let activeSprites = 0;
+    const maxSprites = visualProfile.lowPower ? 6 : 18;
+    const initialSprites = visualProfile.lowPower ? 3 : 8;
+    const spawnInterval = visualProfile.lowPower ? 2400 : 850;
 
     function spawnSprite() {
-        if (activeSprites > 18) return;
+        if (activeSprites > maxSprites) return;
         activeSprites++;
 
         const sprite = document.createElement("span");
@@ -227,8 +266,8 @@ function initRomanceRenderer() {
         sprite.textContent = symbols[Math.floor(Math.random() * symbols.length)];
         const startX = 4 + Math.random() * 92;
         const driftX = -40 + Math.random() * 80;
-        const size = 14 + Math.random() * 18;
-        const duration = 7000 + Math.random() * 4500;
+        const size = visualProfile.lowPower ? 12 + Math.random() * 10 : 14 + Math.random() * 18;
+        const duration = visualProfile.lowPower ? 9000 + Math.random() * 4500 : 7000 + Math.random() * 4500;
 
         sprite.style.left = `${startX}vw`;
         sprite.style.fontSize = `${size}px`;
@@ -249,10 +288,10 @@ function initRomanceRenderer() {
         };
     }
 
-    for (let index = 0; index < 8; index++) {
-        setTimeout(spawnSprite, index * 280);
+    for (let index = 0; index < initialSprites; index++) {
+        setTimeout(spawnSprite, index * (visualProfile.lowPower ? 520 : 280));
     }
-    setInterval(spawnSprite, 850);
+    setInterval(spawnSprite, spawnInterval);
 }
 
 // TAGLINE: Section reveal halus saat pengunjung scroll setelah amplop dibuka.
@@ -285,8 +324,8 @@ function initMotionEngine() {
     if (motionEngineStarted) return;
     motionEngineStarted = true;
 
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
+    const reduceMotion = visualProfile.reduceMotion;
+    if (reduceMotion || visualProfile.lowPower) return;
 
     document.body.classList.add("js-motion");
 
@@ -1819,6 +1858,7 @@ window.addEventListener("resize", fitEnvelopeLetter);
 document.getElementById("pesanCurhat")?.addEventListener("input", updateCurhatCounter);
 
 async function initPage() {
+    initVisualProfile();
     initSkyCanvas();
     initRomanceRenderer();
     initMotionEngine();
