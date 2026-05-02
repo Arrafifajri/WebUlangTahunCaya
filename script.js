@@ -491,6 +491,8 @@ let musicShouldResumeAfterVideo = false;
 let musicFadeFrame = null;
 let videoMusicObserver = null;
 let videoMusicFallbackHandler = null;
+let videoMusicGuardEnabled = false;
+let videoMusicCheckFrame = null;
 const musicDefaultVolume = 1;
 
 if (window.AOS) {
@@ -584,6 +586,9 @@ function enableEnvelope() {
 function unlockContentAfterEnvelope() {
     document.body.classList.remove("content-locked");
     document.body.classList.remove("locked");
+    requestAnimationFrame(() => {
+        setupVideoMusicGuard(Boolean(getEmbeddableVideoUrl(settings.videoSrc)));
+    });
 }
 
 function setText(selector, text) {
@@ -1149,6 +1154,10 @@ function createConfettiPiece() {
 
 async function startMusic() {
     if (!music) return;
+    if (isNearVideoMusicZone()) {
+        pauseMusicForVideo();
+        return;
+    }
     if (videoMusicZoneActive) return;
     const selectedSrc = music.currentSrc || music.getAttribute("src") || musicSource?.getAttribute("src") || "";
     if (!selectedSrc) return;
@@ -1231,6 +1240,24 @@ function pauseMusicForVideo(keepResumeFlag = false) {
     });
 }
 
+function isNearVideoMusicZone() {
+    if (!videoMusicGuardEnabled) return false;
+
+    const section = document.querySelector(".video-section");
+    if (!section || document.body.classList.contains("content-locked")) return false;
+
+    const rect = section.getBoundingClientRect();
+    const height = window.innerHeight || document.documentElement.clientHeight || 720;
+    const enterDistance = height * 1.35;
+    const leaveDistance = height * 0.55;
+
+    if (videoMusicZoneActive) {
+        return rect.top < height + leaveDistance && rect.bottom > -leaveDistance;
+    }
+
+    return rect.top < height + enterDistance && rect.bottom > -enterDistance * 0.35;
+}
+
 async function resumeMusicAfterVideo() {
     if (!music) return;
     videoMusicZoneActive = false;
@@ -1255,6 +1282,7 @@ async function resumeMusicAfterVideo() {
 
 function setupVideoMusicGuard(hasVideo) {
     const section = document.querySelector(".video-section");
+    videoMusicGuardEnabled = Boolean(hasVideo && section);
     if (videoMusicObserver) {
         videoMusicObserver.disconnect();
         videoMusicObserver = null;
@@ -1262,10 +1290,16 @@ function setupVideoMusicGuard(hasVideo) {
     if (videoMusicFallbackHandler) {
         window.removeEventListener("scroll", videoMusicFallbackHandler);
         window.removeEventListener("resize", videoMusicFallbackHandler);
+        window.removeEventListener("touchmove", videoMusicFallbackHandler);
+        window.removeEventListener("wheel", videoMusicFallbackHandler);
         videoMusicFallbackHandler = null;
     }
+    if (videoMusicCheckFrame) {
+        cancelAnimationFrame(videoMusicCheckFrame);
+        videoMusicCheckFrame = null;
+    }
 
-    if (!section || !hasVideo) {
+    if (!videoMusicGuardEnabled) {
         if (videoMusicZoneActive) resumeMusicAfterVideo();
         return;
     }
@@ -1278,27 +1312,38 @@ function setupVideoMusicGuard(hasVideo) {
         }
     }
 
+    function checkVideoZone() {
+        videoMusicCheckFrame = null;
+        setVideoZone(isNearVideoMusicZone());
+    }
+
+    function scheduleVideoZoneCheck() {
+        if (videoMusicCheckFrame) return;
+        videoMusicCheckFrame = requestAnimationFrame(checkVideoZone);
+    }
+
     if ("IntersectionObserver" in window) {
         videoMusicObserver = new IntersectionObserver((entries) => {
             const entry = entries[0];
-            setVideoZone(Boolean(entry?.isIntersecting));
+            if (entry?.isIntersecting || isNearVideoMusicZone()) {
+                pauseMusicForVideo();
+            } else {
+                scheduleVideoZoneCheck();
+            }
         }, {
             root: null,
-            rootMargin: "45% 0px 45% 0px",
+            rootMargin: "90% 0px 90% 0px",
             threshold: 0.01
         });
         videoMusicObserver.observe(section);
-        return;
     }
 
-    videoMusicFallbackHandler = () => {
-        const rect = section.getBoundingClientRect();
-        const buffer = window.innerHeight * 0.45;
-        setVideoZone(rect.top < window.innerHeight + buffer && rect.bottom > -buffer);
-    };
+    videoMusicFallbackHandler = scheduleVideoZoneCheck;
     window.addEventListener("scroll", videoMusicFallbackHandler, { passive: true });
     window.addEventListener("resize", videoMusicFallbackHandler);
-    videoMusicFallbackHandler();
+    window.addEventListener("touchmove", videoMusicFallbackHandler, { passive: true });
+    window.addEventListener("wheel", videoMusicFallbackHandler, { passive: true });
+    scheduleVideoZoneCheck();
 }
 
 function goToSection(selector) {
