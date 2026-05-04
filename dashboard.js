@@ -46,9 +46,9 @@ const defaultSettings = {
         "Semoga langkahmu ringan, rezekimu luas, dan senyummu sering muncul."
     ],
     quiz: [
-        { question: "Apa hadiah paling manis dari hubungan ini?", options: ["Saling punya rumah pulang", "Menang debat", "Jarang chat"], answer: 0 },
-        { question: "Kalau lagi kangen, yang paling cocok dilakukan apa?", options: ["Ngambek diam-diam", "Bilang baik-baik", "Hilang tanpa kabar"], answer: 1 },
-        { question: "Berapa persen sayang yang bisa dihitung sistem?", options: ["100%", "999999%", "Cuma sedikit"], answer: 1 }
+        { question: "Kalau aku lagi insecure, kamu bakal gimana?", options: ["Peluk dan yakinin aku nggak akan kemana-mana", "Kasih penjelasan logis biar aku tenang", "Ngajak bercanda sampai aku salting"] },
+        { question: "Kalau kita lagi kangen tapi belum bisa ketemu, kamu pilih apa?", options: ["Telepon sampai sama-sama tenang", "Kirim pesan panjang yang manis", "Ngajak bahas rencana ketemu berikutnya"] },
+        { question: "Kalau aku lagi capek banget, kamu mau jadi apa?", options: ["Tempat pulang yang paling adem", "Penyemangat yang nggak maksa", "Partner jajan biar mood balik"] }
     ],
     carousel: [
         { src: "awal_kenal.jpg", title: "Awal Kenal", caption: "Momen pertama yang jadi awal semua cerita." },
@@ -775,7 +775,13 @@ function renderQuizEditor() {
             currentSettings.quiz.splice(index, 1);
             renderQuizEditor();
         });
-        card.append(inputField("Pertanyaan", item.question, (value) => item.question = value, true), inputField("Pilihan 1", item.options[0], (value) => item.options[0] = value), inputField("Pilihan 2", item.options[1], (value) => item.options[1] = value), inputField("Pilihan 3", item.options[2], (value) => item.options[2] = value), inputField("Jawaban benar (1/2/3)", String((item.answer || 0) + 1), (value) => item.answer = Math.max(0, Math.min(2, Number(value) - 1 || 0))));
+        delete item.answer;
+        card.append(
+            inputField("Pertanyaan", item.question, (value) => item.question = value, true),
+            inputField("Pilihan A", item.options[0], (value) => item.options[0] = value),
+            inputField("Pilihan B", item.options[1], (value) => item.options[1] = value),
+            inputField("Pilihan C", item.options[2], (value) => item.options[2] = value)
+        );
         target.appendChild(card);
     });
 }
@@ -785,7 +791,12 @@ function collectTimeline() { return currentSettings.detailedTimeline; }
 function collectPolaroids() { return currentSettings.polaroids; }
 function collectCarousel() { return currentSettings.carousel; }
 function collectMovingGallery() { return currentSettings.movingGallery; }
-function collectQuiz() { return currentSettings.quiz; }
+function collectQuiz() {
+    return currentSettings.quiz.map((item) => ({
+        question: item.question || "",
+        options: (item.options || []).slice(0, 3)
+    }));
+}
 
 function addLittleThing() {
     currentSettings.littleThings.push({ label: "Label baru", value: "Isi baru" });
@@ -813,7 +824,7 @@ function addMovingGalleryItem() {
 }
 
 function addQuizItem() {
-    currentSettings.quiz.push({ question: "Pertanyaan baru?", options: ["Pilihan 1", "Pilihan 2", "Pilihan 3"], answer: 0 });
+    currentSettings.quiz.push({ question: "Pertanyaan baru?", options: ["Pilihan A", "Pilihan B", "Pilihan C"] });
     renderQuizEditor();
 }
 
@@ -848,21 +859,20 @@ function renderMonitorSummary(results) {
 
     target.innerHTML = "";
     const totalSessions = results.length;
-    const averageScore = totalSessions
-        ? Math.round(results.reduce((sum, item) => sum + (item.total ? item.score / item.total : 0), 0) / totalSessions * 100)
+    const totalAnswers = results.reduce((sum, item) => sum + ((item.answers || []).length || Number(item.score) || 0), 0);
+    const averageReasonLength = totalAnswers
+        ? Math.round(results.reduce((sum, item) => sum + (item.answers || []).reduce((answerSum, answer) => answerSum + String(answer.reason || "").length, 0), 0) / totalAnswers)
         : 0;
-    const bestScore = results.reduce((best, item) => {
-        const percent = item.total ? Math.round(item.score / item.total * 100) : 0;
-        return Math.max(best, percent);
-    }, 0);
     const averageDuration = totalSessions
         ? Math.round(results.reduce((sum, item) => sum + (Number(item.durationMs) || 0), 0) / totalSessions)
         : 0;
+    const latestSession = results[0]?.createdAt ? formatMonitorDate(results[0].createdAt) : "-";
 
     [
         ["Sesi masuk", String(totalSessions)],
-        ["Rata-rata skor", `${averageScore}%`],
-        ["Skor terbaik", `${bestScore}%`],
+        ["Total jawaban", String(totalAnswers)],
+        ["Rata-rata alasan", `${averageReasonLength} huruf`],
+        ["Terbaru", latestSession],
         ["Rata-rata waktu", formatDuration(averageDuration)]
     ].forEach(([label, value]) => {
         const card = document.createElement("article");
@@ -885,7 +895,6 @@ function renderQuizResults(results) {
     }
 
     results.forEach((result, resultIndex) => {
-        const percent = result.total ? Math.round(result.score / result.total * 100) : 0;
         const card = document.createElement("article");
         card.className = "quiz-result-card";
 
@@ -896,7 +905,8 @@ function renderQuizResults(results) {
             createTextElement("h3", "", `Sesi ${resultIndex + 1}`),
             createTextElement("p", "", formatMonitorDate(result.createdAt))
         );
-        const score = createTextElement("strong", "quiz-score-badge", `${result.score}/${result.total} (${percent}%)`);
+        const answerCount = (result.answers || []).length || result.score || 0;
+        const score = createTextElement("strong", "quiz-score-badge", `${answerCount}/${result.total} jawaban`);
         head.append(titleBlock, score);
 
         const meta = document.createElement("div");
@@ -911,12 +921,12 @@ function renderQuizResults(results) {
         answers.className = "quiz-answer-list";
         (result.answers || []).forEach((answer, answerIndex) => {
             const row = document.createElement("div");
-            row.className = `quiz-answer-row ${answer.isCorrect ? "is-correct" : "is-wrong"}`;
+            row.className = "quiz-answer-row is-open-answer";
 
             const question = createTextElement("p", "quiz-answer-question", `${answerIndex + 1}. ${answer.question || "Pertanyaan kosong"}`);
-            const selected = createTextElement("span", "", `Jawaban dia: ${answer.selectedOption || "-"}`);
-            const correct = createTextElement("span", "", `Kunci: ${answer.correctOption || "-"}`);
-            row.append(question, selected, correct);
+            const selected = createTextElement("span", "", `Jawaban dia: ${answer.selectedLetter ? `${answer.selectedLetter}. ` : ""}${answer.selectedOption || "-"}`);
+            const reason = createTextElement("p", "quiz-answer-reason", `Alasan: ${answer.reason || "Belum ada alasan tersimpan."}`);
+            row.append(question, selected, reason);
             answers.appendChild(row);
         });
 

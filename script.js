@@ -956,6 +956,7 @@ let quizQuestions = settings.quiz;
 let carouselPhotos = settings.carousel;
 let currentQuizIndex = 0;
 let quizScore = 0;
+let quizPendingAnswer = null;
 let quizSessionId = "";
 let quizStartedAt = null;
 let quizAnswers = [];
@@ -1969,6 +1970,7 @@ function createQuizSessionId() {
 function resetQuizSession() {
     currentQuizIndex = 0;
     quizScore = 0;
+    quizPendingAnswer = null;
     quizStartedAt = null;
     quizAnswers = [];
     quizSubmitted = false;
@@ -2003,7 +2005,24 @@ async function submitQuizResult() {
     }
 }
 
-// TAGLINE: Mini quiz publik, hasil akhirnya disimpan ke D1 untuk monitoring dashboard.
+function getQuizOptionLabels() {
+    return ["A", "B", "C"];
+}
+
+function getNormalizedQuizOptions(question) {
+    const labels = getQuizOptionLabels();
+    const source = Array.isArray(question?.options) ? question.options : [];
+    return labels.map((label, index) => ({
+        label,
+        text: String(source[index] || "").trim()
+    })).filter((option) => option.text);
+}
+
+function getQuizAnswerInput() {
+    return document.getElementById("quizReasonInput");
+}
+
+// TAGLINE: Mini quiz publik, tiap jawaban wajib punya alasan lalu hasilnya masuk monitoring D1.
 function renderQuiz() {
     const questionElement = document.getElementById("quizQuestion");
     const optionsElement = document.getElementById("quizOptions");
@@ -2019,24 +2038,40 @@ function renderQuiz() {
     }
 
     if (currentQuizIndex >= quizQuestions.length) {
-        questionElement.textContent = "Quiz selesai!";
+        questionElement.textContent = "Yeay! Kuis selesai.";
         optionsElement.innerHTML = "";
-        resultElement.textContent = `Skor kamu ${quizScore}/${quizQuestions.length}. Hadiahnya: aku makin sayang.`;
+        resultElement.textContent = "Apapun jawaban kamu, aku bakal tetap sayang kamu selamanya. Happy birthday sekali lagi, sayang.";
         return;
     }
 
     const currentQuestion = quizQuestions[currentQuizIndex];
-    questionElement.textContent = currentQuestion.question;
+    const options = getNormalizedQuizOptions(currentQuestion);
+    questionElement.textContent = `Pertanyaan ke-${currentQuizIndex + 1}: ${currentQuestion.question || "Pertanyaan kosong"}`;
     resultElement.textContent = "";
     optionsElement.innerHTML = "";
+    quizPendingAnswer = null;
 
-    currentQuestion.options.forEach((option, index) => {
+    if (!options.length) {
+        resultElement.textContent = "Pilihan quiz belum lengkap. Cek dashboard dulu ya.";
+        return;
+    }
+
+    const helper = document.createElement("p");
+    helper.className = "quiz-helper";
+    helper.textContent = "Pilih jawabanmu (A/B/C), terus kasih tau alasannya ya.";
+    optionsElement.appendChild(helper);
+
+    options.forEach((option, index) => {
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent = option;
+        button.className = "quiz-option-button";
+        button.dataset.optionIndex = String(index);
+        button.innerHTML = `<strong>${option.label}</strong><span>${option.text}</span>`;
         button.onclick = () => answerQuiz(index);
         optionsElement.appendChild(button);
     });
+
+    renderQuizReasonBox();
 }
 
 function answerQuiz(index) {
@@ -2044,36 +2079,99 @@ function answerQuiz(index) {
 
     const currentQuestion = quizQuestions[currentQuizIndex];
     const resultElement = document.getElementById("quizResult");
-    if (!currentQuestion || !Array.isArray(currentQuestion.options)) return;
+    const options = getNormalizedQuizOptions(currentQuestion);
+    const selected = options[index];
+    if (!currentQuestion || !selected) return;
 
     if (!quizStartedAt) quizStartedAt = Date.now();
-    const correctIndex = Number(currentQuestion.answer) || 0;
-    const selectedOption = currentQuestion.options[index] || "";
-    const correctOption = currentQuestion.options[correctIndex] || "";
-    const isCorrect = index === correctIndex;
-
-    quizAnswers.push({
+    quizPendingAnswer = {
         question: currentQuestion.question || `Pertanyaan ${currentQuizIndex + 1}`,
         selectedIndex: index,
-        selectedOption,
-        correctIndex,
-        correctOption,
-        isCorrect,
+        selectedLetter: selected.label,
+        selectedOption: selected.text,
         answeredAt: new Date().toISOString()
+    };
+
+    document.querySelectorAll(".quiz-option-button").forEach((button) => {
+        button.classList.toggle("is-selected", Number(button.dataset.optionIndex) === index);
+    });
+    renderQuizReasonBox();
+    getQuizAnswerInput()?.focus();
+    resultElement.textContent = "Kenapa kamu pilih itu? Kasih tau alasannya dong...";
+}
+
+function renderQuizReasonBox() {
+    const optionsElement = document.getElementById("quizOptions");
+    if (!optionsElement) return;
+
+    const oldBox = document.getElementById("quizReasonBox");
+    if (oldBox) oldBox.remove();
+    if (!quizPendingAnswer) return;
+
+    const box = document.createElement("div");
+    box.id = "quizReasonBox";
+    box.className = "quiz-reason-box";
+
+    const label = document.createElement("label");
+    label.htmlFor = "quizReasonInput";
+    label.textContent = `Alasan kamu pilih ${quizPendingAnswer.selectedLetter}`;
+
+    const textarea = document.createElement("textarea");
+    textarea.id = "quizReasonInput";
+    textarea.rows = 4;
+    textarea.maxLength = 700;
+    textarea.placeholder = "Tulis alasannya di sini...";
+
+    const footer = document.createElement("div");
+    footer.className = "quiz-reason-actions";
+    const counter = document.createElement("span");
+    counter.id = "quizReasonCounter";
+    counter.textContent = "0/700";
+
+    textarea.addEventListener("input", () => {
+        counter.textContent = `${textarea.value.length}/700`;
     });
 
-    if (isCorrect) {
-        quizScore++;
-        resultElement.textContent = "Benar. Kamu memang paham cerita kita.";
-    } else {
-        resultElement.textContent = "Hampir. Tapi tetap lucu, jadi nilainya aman.";
+    const submitButton = document.createElement("button");
+    submitButton.type = "button";
+    submitButton.textContent = "Simpan jawaban";
+    submitButton.onclick = submitQuizReason;
+
+    footer.append(counter, submitButton);
+    box.append(label, textarea, footer);
+    optionsElement.appendChild(box);
+}
+
+function submitQuizReason() {
+    if (!quizPendingAnswer) return;
+
+    const resultElement = document.getElementById("quizResult");
+    const input = getQuizAnswerInput();
+    const reason = String(input?.value || "").trim();
+
+    if (!reason) {
+        if (resultElement) resultElement.textContent = "Ayo isi alasannya dulu, biar jawabannya makin manis.";
+        input?.focus();
+        return;
+    }
+
+    quizAnswers.push({
+        ...quizPendingAnswer,
+        reason,
+        isCorrect: true
+    });
+    quizScore = quizAnswers.length;
+    quizPendingAnswer = null;
+
+    if (resultElement) {
+        resultElement.textContent = "Makasih sayang! Jawaban kamu bikin aku makin sayang.";
     }
 
     currentQuizIndex++;
     if (currentQuizIndex >= quizQuestions.length) {
         submitQuizResult();
     }
-    setTimeout(renderQuiz, 900);
+    setTimeout(renderQuiz, 950);
 }
 
 function renderCarousel() {

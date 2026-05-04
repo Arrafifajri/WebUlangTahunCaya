@@ -46,9 +46,11 @@ function normalizeAnswer(answer, index) {
         index,
         question: limitText(answer?.question, 500),
         selectedIndex,
+        selectedLetter: limitText(answer?.selectedLetter, 4),
         selectedOption: limitText(answer?.selectedOption, 300),
         correctIndex,
         correctOption: limitText(answer?.correctOption, 300),
+        reason: limitText(answer?.reason, 900),
         isCorrect: Boolean(answer?.isCorrect),
         answeredAt: limitText(answer?.answeredAt, 40)
     };

@@ -633,6 +633,11 @@ textarea:focus {
     background: #fff7f7;
 }
 
+.quiz-answer-row.is-open-answer {
+    border-color: #bae6fd;
+    background: linear-gradient(180deg, #ffffff, #f2fbff);
+}
+
 .quiz-answer-question {
     color: #17324d;
     font-weight: 900;
@@ -642,6 +647,16 @@ textarea:focus {
     color: #31516d;
     font-size: 0.86rem;
     font-weight: 700;
+}
+
+.quiz-answer-reason {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #17324d;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.55;
 }
 
 .feeling-message-card {
