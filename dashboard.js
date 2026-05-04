@@ -484,7 +484,7 @@ async function fetchBackupPart(label, url, options = {}) {
     }
 }
 
-function createBackupFilename() {
+function createBackupFilename(kind = "database") {
     const now = new Date();
     const pad = (value) => String(value).padStart(2, "0");
     const stamp = [
@@ -493,7 +493,7 @@ function createBackupFilename() {
         pad(now.getDate())
     ].join("-") + "_" + [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())].join("-");
 
-    return `caya-database-backup-${stamp}.txt`;
+    return `caya-${kind}-backup-${stamp}.txt`;
 }
 
 function downloadTextFile(filename, text) {
@@ -561,7 +561,7 @@ async function downloadDatabaseBackup() {
             }))
     };
 
-    const filename = createBackupFilename();
+    const filename = createBackupFilename("database");
     downloadTextFile(filename, JSON.stringify(backup, null, 2));
 
     if (backup.errors.length) {
@@ -570,6 +570,146 @@ async function downloadDatabaseBackup() {
     }
 
     setStatus(`Backup database terdownload sebagai ${filename}.`, "#047857");
+}
+
+function readJsonBackupFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                resolve(JSON.parse(String(reader.result || "")));
+            } catch (error) {
+                reject(new Error("File backup bukan JSON valid."));
+            }
+        };
+        reader.onerror = () => reject(new Error("Gagal membaca file backup."));
+        reader.readAsText(file);
+    });
+}
+
+function getErrorMessageFromResponse(text, fallback) {
+    try {
+        const parsed = JSON.parse(text);
+        return `${parsed.error || fallback}${parsed.detail ? ` ${parsed.detail}` : ""}`;
+    } catch (error) {
+        return text || fallback;
+    }
+}
+
+// TAGLINE: Backup KV khusus media besar, terpisah dari backup D1 agar file utama tetap ringan.
+async function downloadKvBackup() {
+    const password = getAdminPassword();
+    if (!password) {
+        setStatus("Login dulu sebelum download backup KV.", "#b91c1c");
+        return;
+    }
+
+    setStatus("Membuat backup KV. Kalau media banyak, proses bisa agak lama...");
+
+    try {
+        const response = await fetch(`/api/kv-backup?t=${Date.now()}`, {
+            headers: {
+                "x-admin-password": password
+            },
+            cache: "no-store"
+        });
+        const text = await response.text();
+
+        if (!response.ok) {
+            throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+        }
+
+        const backup = JSON.parse(text);
+        const filename = createBackupFilename("kv");
+        downloadTextFile(filename, JSON.stringify(backup, null, 2));
+        setStatus(`Backup KV terdownload sebagai ${filename}. Total item: ${backup?.kv?.itemCount || 0}.`, "#047857");
+    } catch (error) {
+        setStatus(`${error.message} Backup KV gagal.`, "#b91c1c");
+    }
+}
+
+// TAGLINE: Restore D1 dari file backup database; settings, quiz result, dan pesan akan diganti isi backup.
+async function restoreDatabaseBackup(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const password = getAdminPassword();
+    if (!password) {
+        setStatus("Login dulu sebelum restore D1.", "#b91c1c");
+        return;
+    }
+
+    const ok = confirm("Restore D1 akan mengganti settings, hasil quiz, dan pesan perasaan sesuai isi file backup. Lanjut?");
+    if (!ok) return;
+
+    try {
+        setStatus(`Membaca ${file.name} untuk restore D1...`);
+        const backup = await readJsonBackupFile(file);
+        const response = await fetch("/api/database-restore", {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                "x-admin-password": password
+            },
+            body: JSON.stringify(backup)
+        });
+        const text = await response.text();
+
+        if (!response.ok) {
+            throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+        }
+
+        const result = JSON.parse(text);
+        setStatus(`Restore D1 selesai. Settings: ${result.restored?.settings ? "ok" : "kosong"}, quiz: ${result.restored?.quizResults || 0}, pesan: ${result.restored?.feelingMessages || 0}.`, "#047857");
+        await fillForm();
+        await loadQuizResults();
+        await loadFeelingMessages();
+    } catch (error) {
+        setStatus(`${error.message} Restore D1 gagal.`, "#b91c1c");
+    }
+}
+
+// TAGLINE: Restore KV dari file backup media; key yang sama akan ditimpa agar URL lama tetap hidup.
+async function restoreKvBackup(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const password = getAdminPassword();
+    if (!password) {
+        setStatus("Login dulu sebelum restore KV.", "#b91c1c");
+        return;
+    }
+
+    const ok = confirm("Restore KV akan memasukkan media dari file backup dan menimpa key yang sama. Lanjut?");
+    if (!ok) return;
+
+    try {
+        setStatus(`Membaca ${file.name} untuk restore KV...`);
+        const backup = await readJsonBackupFile(file);
+        const response = await fetch("/api/kv-backup", {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                "x-admin-password": password
+            },
+            body: JSON.stringify({
+                ...backup,
+                replaceExisting: false
+            })
+        });
+        const text = await response.text();
+
+        if (!response.ok) {
+            throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+        }
+
+        const result = JSON.parse(text);
+        setStatus(`Restore KV selesai. ${result.restoredCount || 0} item media dipulihkan.`, "#047857");
+    } catch (error) {
+        setStatus(`${error.message} Restore KV gagal.`, "#b91c1c");
+    }
 }
 
 // TAGLINE: Upload media dashboard ke Cloudflare KV agar D1 tetap ringan.

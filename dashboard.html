@@ -33,6 +33,7 @@
         <div class="header-actions">
             <button type="button" class="ghost-button" onclick="resetSettings()">Reset</button>
             <button type="button" class="ghost-button" onclick="downloadDatabaseBackup()">Backup DB</button>
+            <button type="button" class="ghost-button" onclick="downloadKvBackup()">Backup KV</button>
             <button type="button" class="ghost-button" onclick="window.open('index.html', '_blank')">Preview</button>
             <button type="button" class="ghost-button" onclick="logoutDashboard()">Logout</button>
             <button type="button" class="primary-button" onclick="saveSettings()">Simpan</button>
@@ -220,15 +221,29 @@
                 </div>
             </section>
 
-            <!-- TAGLINE: Backup database mengunduh settings, hasil quiz, dan pesan D1 ke file TXT berisi JSON. -->
+            <!-- TAGLINE: Backup/restore D1 dan KV. D1 untuk data teks, KV untuk media upload. -->
             <section id="backup" class="panel">
                 <div class="monitor-heading">
                     <div>
-                        <h2>Backup Database</h2>
-                        <p class="panel-note">Download cadangan database dalam file TXT. Isi file tetap JSON rapi agar gampang dibaca atau dipakai ulang nanti.</p>
+                        <h2>Backup & Restore</h2>
+                        <p class="panel-note">D1 menyimpan teks/settings/monitoring. KV menyimpan media besar seperti foto, musik, dan video.</p>
                     </div>
-                    <button type="button" class="primary-button" onclick="downloadDatabaseBackup()">Download Backup</button>
+                    <div class="backup-actions">
+                        <button type="button" class="primary-button" onclick="downloadDatabaseBackup()">Backup D1</button>
+                        <button type="button" class="ghost-button" onclick="downloadKvBackup()">Backup KV</button>
+                    </div>
                 </div>
+                <div class="restore-grid">
+                    <label class="restore-upload-button">
+                        Restore D1 dari file
+                        <input id="restoreD1Input" type="file" accept=".txt,.json,application/json,text/plain" onchange="restoreDatabaseBackup(event)">
+                    </label>
+                    <label class="restore-upload-button">
+                        Restore KV dari file
+                        <input id="restoreKvInput" type="file" accept=".txt,.json,application/json,text/plain" onchange="restoreKvBackup(event)">
+                    </label>
+                </div>
+                <p class="panel-note compact-note">Restore D1 akan mengganti settings, hasil quiz, dan pesan sesuai isi file backup. Restore KV akan mengembalikan key media dan menimpa key yang sama.</p>
             </section>
 
             <section id="ending" class="panel">
