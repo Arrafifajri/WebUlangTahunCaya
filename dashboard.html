@@ -32,6 +32,7 @@
         </div>
         <div class="header-actions">
             <button type="button" class="ghost-button" onclick="resetSettings()">Reset</button>
+            <button type="button" class="ghost-button" onclick="downloadDatabaseBackup()">Backup DB</button>
             <button type="button" class="ghost-button" onclick="window.open('index.html', '_blank')">Preview</button>
             <button type="button" class="ghost-button" onclick="logoutDashboard()">Logout</button>
             <button type="button" class="primary-button" onclick="saveSettings()">Simpan</button>
@@ -48,6 +49,7 @@
             <a href="#interactive">Interaktif</a>
             <a href="#monitoring">Monitoring</a>
             <a href="#messages">Pesan</a>
+            <a href="#backup">Backup</a>
             <a href="#ending">Ending</a>
         </aside>
 
@@ -215,6 +217,17 @@
                 </div>
                 <div id="feelingMessagesMonitor" class="monitor-list">
                     <p class="empty-monitor">Belum ada pesan perasaan yang masuk.</p>
+                </div>
+            </section>
+
+            <!-- TAGLINE: Backup database mengunduh settings, hasil quiz, dan pesan D1 ke file TXT berisi JSON. -->
+            <section id="backup" class="panel">
+                <div class="monitor-heading">
+                    <div>
+                        <h2>Backup Database</h2>
+                        <p class="panel-note">Download cadangan database dalam file TXT. Isi file tetap JSON rapi agar gampang dibaca atau dipakai ulang nanti.</p>
+                    </div>
+                    <button type="button" class="primary-button" onclick="downloadDatabaseBackup()">Download Backup</button>
                 </div>
             </section>
 

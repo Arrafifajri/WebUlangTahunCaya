@@ -148,6 +148,13 @@ function parseLines(id) {
     return $(id).value.split("\n").map((line) => line.trim()).filter(Boolean);
 }
 
+function setStatus(message, color = "#075985") {
+    const status = $("statusText");
+    if (!status) return;
+    status.textContent = message;
+    status.style.color = color;
+}
+
 function parseParagraphs(id) {
     return $(id).value.split(/\n\s*\n/).map((line) => line.trim()).filter(Boolean);
 }
@@ -431,6 +438,138 @@ async function saveSettings() {
         status.textContent = `${error.message} Perubahan belum disimpan ke Cloudflare.`;
         status.style.color = "#b91c1c";
     }
+}
+
+async function fetchBackupPart(label, url, options = {}) {
+    try {
+        const response = await fetch(url, {
+            cache: "no-store",
+            ...options,
+            headers: {
+                ...(options.headers || {})
+            }
+        });
+        const text = await response.text();
+        let data = null;
+
+        try {
+            data = text ? JSON.parse(text) : null;
+        } catch (error) {
+            return {
+                ok: false,
+                label,
+                status: response.status,
+                error: "Response bukan JSON valid.",
+                raw: text.slice(0, 1200)
+            };
+        }
+
+        if (!response.ok) {
+            return {
+                ok: false,
+                label,
+                status: response.status,
+                error: `${data?.error || "Request backup gagal."}${data?.detail ? ` ${data.detail}` : ""}`
+            };
+        }
+
+        return { ok: true, label, status: response.status, data };
+    } catch (error) {
+        return {
+            ok: false,
+            label,
+            status: 0,
+            error: String(error && error.message ? error.message : error)
+        };
+    }
+}
+
+function createBackupFilename() {
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, "0");
+    const stamp = [
+        now.getFullYear(),
+        pad(now.getMonth() + 1),
+        pad(now.getDate())
+    ].join("-") + "_" + [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())].join("-");
+
+    return `caya-database-backup-${stamp}.txt`;
+}
+
+function downloadTextFile(filename, text) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// TAGLINE: Backup D1 dari dashboard ke file TXT, berisi JSON settings, quiz result, dan pesan perasaan.
+async function downloadDatabaseBackup() {
+    const password = getAdminPassword();
+    if (!password) {
+        setStatus("Login dulu sebelum download backup database.", "#b91c1c");
+        return;
+    }
+
+    setStatus("Membuat backup database dari Cloudflare D1...");
+
+    const adminHeaders = { "x-admin-password": password };
+    const [settingsPart, quizPart, feelingsPart] = await Promise.all([
+        fetchBackupPart("settings", `/api/settings?t=${Date.now()}`),
+        fetchBackupPart("quizResults", `/api/quiz-results?limit=100&t=${Date.now()}`, { headers: adminHeaders }),
+        fetchBackupPart("feelingMessages", `/api/feelings?limit=100&t=${Date.now()}`, { headers: adminHeaders })
+    ]);
+
+    const parts = [settingsPart, quizPart, feelingsPart];
+    let dashboardDraft = null;
+    try {
+        dashboardDraft = collectSettings();
+    } catch (error) {
+        dashboardDraft = {
+            error: String(error && error.message ? error.message : error)
+        };
+    }
+
+    const backup = {
+        meta: {
+            backupType: "caya-birthday-web-database",
+            format: "txt-json",
+            version: 1,
+            generatedAt: new Date().toISOString(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+            origin: window.location.origin,
+            note: "File TXT ini berisi JSON. database.settings adalah data aktif dari D1, dashboardDraft adalah isi form dashboard saat tombol backup ditekan."
+        },
+        database: {
+            settings: settingsPart.ok ? settingsPart.data : null,
+            quizResults: quizPart.ok ? (quizPart.data?.results || []) : [],
+            feelingMessages: feelingsPart.ok ? (feelingsPart.data?.messages || []) : []
+        },
+        dashboardDraft,
+        errors: parts
+            .filter((part) => !part.ok)
+            .map((part) => ({
+                label: part.label,
+                status: part.status,
+                error: part.error,
+                raw: part.raw || undefined
+            }))
+    };
+
+    const filename = createBackupFilename();
+    downloadTextFile(filename, JSON.stringify(backup, null, 2));
+
+    if (backup.errors.length) {
+        setStatus(`Backup terdownload sebagai ${filename}, tapi ada ${backup.errors.length} bagian yang gagal. Cek bagian errors di file.`, "#b45309");
+        return;
+    }
+
+    setStatus(`Backup database terdownload sebagai ${filename}.`, "#047857");
 }
 
 // TAGLINE: Upload media dashboard ke Cloudflare KV agar D1 tetap ringan.
