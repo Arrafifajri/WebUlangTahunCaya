@@ -596,6 +596,69 @@ function getErrorMessageFromResponse(text, fallback) {
     }
 }
 
+function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    const chunkSize = 0x8000;
+
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+    }
+
+    return btoa(binary);
+}
+
+function getKvBackupItems(backup) {
+    const items = backup?.kv?.items || backup?.items || backup?.database?.kvItems || [];
+    return Array.isArray(items) ? items : [];
+}
+
+async function fetchKvManifestPage(password, cursor = "") {
+    const params = new URLSearchParams({
+        limit: "100",
+        t: String(Date.now())
+    });
+    if (cursor) params.set("cursor", cursor);
+
+    const response = await fetch(`/api/kv-backup?${params.toString()}`, {
+        headers: {
+            "x-admin-password": password
+        },
+        cache: "no-store"
+    });
+    const text = await response.text();
+
+    if (!response.ok) {
+        throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+    }
+
+    return JSON.parse(text);
+}
+
+async function fetchKvMediaItem(item, index) {
+    const key = item.key || item.name;
+    if (!key) return null;
+
+    setStatus(`Mengambil media KV ${index + 1}: ${key}`);
+    const response = await fetch(`/api/media?key=${encodeURIComponent(key)}&t=${Date.now()}`, {
+        cache: "no-store"
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(getErrorMessageFromResponse(text, `Gagal mengambil media ${key}`));
+    }
+
+    const buffer = await response.arrayBuffer();
+    return {
+        key,
+        metadata: item.metadata || {},
+        contentType: response.headers.get("content-type") || item.metadata?.contentType || "application/octet-stream",
+        bytes: buffer.byteLength,
+        valueBase64: arrayBufferToBase64(buffer)
+    };
+}
+
 // TAGLINE: Backup KV khusus media besar, terpisah dari backup D1 agar file utama tetap ringan.
 async function downloadKvBackup() {
     const password = getAdminPassword();
@@ -604,25 +667,49 @@ async function downloadKvBackup() {
         return;
     }
 
-    setStatus("Membuat backup KV. Kalau media banyak, proses bisa agak lama...");
+    setStatus("Membuat backup KV bertahap. Kalau media banyak, proses bisa agak lama...");
 
     try {
-        const response = await fetch(`/api/kv-backup?t=${Date.now()}`, {
-            headers: {
-                "x-admin-password": password
-            },
-            cache: "no-store"
-        });
-        const text = await response.text();
+        let cursor = "";
+        const manifestItems = [];
+        let page = 0;
 
-        if (!response.ok) {
-            throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+        do {
+            page++;
+            setStatus(`Membaca daftar key KV halaman ${page}...`);
+            const manifest = await fetchKvManifestPage(password, cursor);
+            manifestItems.push(...(manifest?.kv?.items || []));
+            cursor = manifest?.kv?.listComplete ? "" : manifest?.kv?.cursor || "";
+        } while (cursor);
+
+        const items = [];
+        let totalBytes = 0;
+        for (let index = 0; index < manifestItems.length; index++) {
+            const mediaItem = await fetchKvMediaItem(manifestItems[index], index);
+            if (!mediaItem) continue;
+            totalBytes += mediaItem.bytes || 0;
+            items.push(mediaItem);
         }
 
-        const backup = JSON.parse(text);
+        const backup = {
+            meta: {
+                backupType: "caya-birthday-web-kv",
+                format: "txt-json",
+                version: 2,
+                generatedAt: new Date().toISOString(),
+                namespaceBinding: "SETTINGS_KV",
+                note: "Backup dibuat bertahap dari dashboard. valueBase64 berisi isi file media."
+            },
+            kv: {
+                itemCount: items.length,
+                totalBytes,
+                items
+            }
+        };
+
         const filename = createBackupFilename("kv");
         downloadTextFile(filename, JSON.stringify(backup, null, 2));
-        setStatus(`Backup KV terdownload sebagai ${filename}. Total item: ${backup?.kv?.itemCount || 0}.`, "#047857");
+        setStatus(`Backup KV terdownload sebagai ${filename}. Total item: ${items.length}.`, "#047857");
     } catch (error) {
         setStatus(`${error.message} Backup KV gagal.`, "#b91c1c");
     }
@@ -688,25 +775,37 @@ async function restoreKvBackup(event) {
     try {
         setStatus(`Membaca ${file.name} untuk restore KV...`);
         const backup = await readJsonBackupFile(file);
-        const response = await fetch("/api/kv-backup", {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "x-admin-password": password
-            },
-            body: JSON.stringify({
-                ...backup,
-                replaceExisting: false
-            })
-        });
-        const text = await response.text();
-
-        if (!response.ok) {
-            throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+        const items = getKvBackupItems(backup);
+        if (!items.length) {
+            throw new Error("File backup KV tidak punya item media.");
         }
 
-        const result = JSON.parse(text);
-        setStatus(`Restore KV selesai. ${result.restoredCount || 0} item media dipulihkan.`, "#047857");
+        let restoredCount = 0;
+        for (let index = 0; index < items.length; index++) {
+            const item = items[index];
+            setStatus(`Restore KV ${index + 1}/${items.length}: ${item.key || "media"}`);
+            const response = await fetch("/api/kv-backup", {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                    "x-admin-password": password
+                },
+                body: JSON.stringify({
+                    items: [item],
+                    replaceExisting: false
+                })
+            });
+            const text = await response.text();
+
+            if (!response.ok) {
+                throw new Error(getErrorMessageFromResponse(text, `API ${response.status}`));
+            }
+
+            const result = JSON.parse(text);
+            restoredCount += result.restoredCount || 0;
+        }
+
+        setStatus(`Restore KV selesai. ${restoredCount} item media dipulihkan.`, "#047857");
     } catch (error) {
         setStatus(`${error.message} Restore KV gagal.`, "#b91c1c");
     }

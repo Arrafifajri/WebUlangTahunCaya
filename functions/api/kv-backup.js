@@ -22,6 +22,11 @@ function limitText(value, maxLength) {
     return String(value || "").slice(0, maxLength);
 }
 
+function toSafeInteger(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
+}
+
 function arrayBufferToBase64(buffer) {
     const bytes = new Uint8Array(buffer);
     let binary = "";
@@ -82,7 +87,40 @@ export async function onRequestGet({ request, env }) {
     }
 
     try {
-        const keys = await listAllKeys(env);
+        const url = new URL(request.url);
+        const cursor = url.searchParams.get("cursor") || undefined;
+        const prefix = url.searchParams.get("prefix") || undefined;
+        const includeValues = url.searchParams.get("includeValues") === "1";
+        const limit = Math.max(1, Math.min(1000, toSafeInteger(url.searchParams.get("limit"), 100)));
+        const listOptions = { cursor, limit };
+        if (prefix) listOptions.prefix = prefix;
+
+        const listResult = await env.SETTINGS_KV.list(listOptions);
+        const keys = listResult.keys || [];
+
+        if (!includeValues) {
+            return json({
+                meta: {
+                    backupType: "caya-birthday-web-kv-manifest",
+                    format: "txt-json",
+                    version: 1,
+                    generatedAt: new Date().toISOString(),
+                    namespaceBinding: "SETTINGS_KV",
+                    note: "Manifest hanya daftar key. Dashboard mengambil value media per key lewat /api/media agar Worker tidak kena limit."
+                },
+                kv: {
+                    itemCount: keys.length,
+                    listComplete: Boolean(listResult.list_complete),
+                    cursor: listResult.cursor || "",
+                    items: keys.map((keyInfo) => ({
+                        key: keyInfo.name,
+                        metadata: keyInfo.metadata || {},
+                        expiration: keyInfo.expiration || null
+                    }))
+                }
+            });
+        }
+
         const items = [];
         let totalBytes = 0;
 
@@ -113,6 +151,8 @@ export async function onRequestGet({ request, env }) {
             kv: {
                 itemCount: items.length,
                 totalBytes,
+                listComplete: Boolean(listResult.list_complete),
+                cursor: listResult.cursor || "",
                 items
             }
         });
