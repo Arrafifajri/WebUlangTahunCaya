@@ -650,13 +650,45 @@ main > section > .js-section-charm.charm-1 {
     position: relative;
     width: 300px;
     height: 200px;
-    background-color: #7bc0e3; /* Warna dasar amplop biru */
-    border-radius: 0 0 10px 10px;
+    background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.48), transparent 23%),
+        linear-gradient(135deg, #d8efbd 0%, #a9d98c 42%, #7cc8d8 100%);
+    border: 1px solid rgba(255,255,255,0.82);
+    border-radius: 18px 18px 16px 16px;
     margin: 0 auto;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    box-shadow:
+        0 20px 42px rgba(69,134,83,0.18),
+        0 14px 34px rgba(0,119,182,0.16),
+        inset 0 1px 0 rgba(255,255,255,0.78);
     transition: transform 0.35s ease, box-shadow 0.35s ease;
     contain: layout;
     will-change: transform;
+}
+
+.envelope::before {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.42);
+    background:
+        linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,0.28) 42% 44%, transparent 44%),
+        linear-gradient(245deg, transparent 0 42%, rgba(255,255,255,0.22) 42% 44%, transparent 44%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.envelope::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 16px;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(0,119,182,0), rgba(0,119,182,0.24), rgba(255,255,255,0.5), rgba(109,174,91,0.26), rgba(0,119,182,0));
+    z-index: 5;
+    pointer-events: none;
 }
 
 .envelope-wrapper:not(.is-waiting):hover .envelope {
@@ -671,13 +703,14 @@ main > section > .js-section-charm.charm-1 {
     width: 0;
     height: 0;
     /* Teknik membuat segitiga di CSS */
-    border-left: 150px solid #9cd2f0;
-    border-right: 150px solid #9cd2f0;
-    border-bottom: 100px solid #63b4e0;
+    border-left: 150px solid #c8e9ab;
+    border-right: 150px solid #9fdcbd;
+    border-bottom: 100px solid #6fb7d7;
     border-top: 100px solid transparent;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 16px 16px;
     z-index: 3;
     pointer-events: none;
+    filter: drop-shadow(0 -1px 0 rgba(255,255,255,0.28));
 }
 
 /* Tutup Amplop Atas (Flap) */
@@ -688,11 +721,130 @@ main > section > .js-section-charm.charm-1 {
     height: 0;
     border-left: 150px solid transparent;
     border-right: 150px solid transparent;
-    border-top: 100px solid #5aa9d4;
+    border-top: 100px solid #98cf78;
     transform-origin: top; /* Titik putar di atas */
     transition: transform 0.6s ease-in-out, z-index 0.2s;
     z-index: 4;
     pointer-events: none;
+    filter: drop-shadow(0 8px 12px rgba(69,134,83,0.14));
+}
+
+.matcha-envelope-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.matcha-leaf,
+.matcha-blue-dot,
+.matcha-steam,
+.matcha-seal {
+    position: absolute;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.matcha-leaf {
+    width: 28px;
+    height: 14px;
+    border-radius: 100% 0 100% 0;
+    background: linear-gradient(135deg, #f4ffd7, #6bae5f);
+    box-shadow: inset 0 -2px 4px rgba(55,105,51,0.12), 0 7px 14px rgba(69,134,83,0.16);
+    opacity: 0.9;
+}
+
+.matcha-leaf::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 4px;
+    top: 6px;
+    height: 1px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.68);
+    transform: rotate(-18deg);
+}
+
+.matcha-leaf.leaf-a {
+    left: 24px;
+    top: 38px;
+    transform: rotate(-22deg);
+}
+
+.matcha-leaf.leaf-b {
+    right: 34px;
+    top: 62px;
+    transform: rotate(24deg);
+}
+
+.matcha-leaf.leaf-c {
+    left: 72%;
+    bottom: 34px;
+    transform: rotate(-36deg) scale(0.82);
+}
+
+.matcha-blue-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #dff8ff, #0077b6);
+    box-shadow: 0 0 16px rgba(0,119,182,0.38);
+}
+
+.matcha-blue-dot.dot-a { left: 18%; bottom: 34px; }
+.matcha-blue-dot.dot-b { right: 24%; top: 32px; width: 7px; height: 7px; }
+.matcha-blue-dot.dot-c { right: 12%; bottom: 54px; width: 6px; height: 6px; }
+
+.matcha-steam {
+    bottom: 116px;
+    width: 11px;
+    height: 34px;
+    border-radius: 999px;
+    border-left: 2px solid rgba(255,255,255,0.7);
+    opacity: 0;
+    filter: blur(0.2px);
+}
+
+.matcha-steam.steam-1 { left: 41%; }
+.matcha-steam.steam-2 { left: 49%; height: 42px; }
+.matcha-steam.steam-3 { left: 57%; height: 30px; }
+
+.matcha-seal {
+    left: 50%;
+    top: 102px;
+    z-index: 7;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 30% 24%, rgba(255,255,255,0.9), transparent 27%),
+        linear-gradient(145deg, #e9f8c9, #8ac979 54%, #4fb2d8);
+    color: #ffffff;
+    font-size: 1.45rem;
+    font-weight: 900;
+    text-shadow: 0 2px 8px rgba(0,119,182,0.28);
+    box-shadow:
+        0 12px 26px rgba(69,134,83,0.22),
+        inset 0 0 0 2px rgba(255,255,255,0.62);
+    transform: translateX(-50%);
+}
+
+.matcha-seal::after {
+    content: "";
+    position: absolute;
+    right: -7px;
+    top: 5px;
+    width: 18px;
+    height: 10px;
+    border-radius: 100% 0 100% 0;
+    background: #d8efbd;
+    transform: rotate(22deg);
+    box-shadow: 0 4px 9px rgba(69,134,83,0.16);
 }
 
 /* Kertas Surat di Dalam */
@@ -839,6 +991,16 @@ main > section > .js-section-charm.charm-1 {
     box-shadow: 0 18px 40px rgba(2,62,138,0.16);
 }
 
+.envelope-wrapper.is-opened .matcha-seal {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.78);
+    transition: opacity 0.34s ease, transform 0.34s ease;
+}
+
+.envelope-wrapper.is-opened .matcha-envelope-decor {
+    opacity: 0.62;
+}
+
 .envelope-wrapper.is-opened .click-instruction {
     opacity: 0; /* Teks panduan hilang */
 }
@@ -970,21 +1132,27 @@ main > section > .js-section-charm.charm-1 {
     }
 
     .envelope {
-        background-color: #7bc0e3 !important;
-        box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important;
+        background:
+            radial-gradient(circle at 18% 20%, rgba(255,255,255,0.48), transparent 23%),
+            linear-gradient(135deg, #d8efbd 0%, #a9d98c 42%, #7cc8d8 100%) !important;
+        border-color: rgba(255,255,255,0.82) !important;
+        box-shadow:
+            0 20px 42px rgba(69,134,83,0.18),
+            0 14px 34px rgba(0,119,182,0.16),
+            inset 0 1px 0 rgba(255,255,255,0.78) !important;
     }
 
     .pocket {
-        border-left-color: #9cd2f0 !important;
-        border-right-color: #9cd2f0 !important;
-        border-bottom-color: #63b4e0 !important;
+        border-left-color: #c8e9ab !important;
+        border-right-color: #9fdcbd !important;
+        border-bottom-color: #6fb7d7 !important;
         border-top-color: transparent !important;
     }
 
     .flap {
         border-left-color: transparent !important;
         border-right-color: transparent !important;
-        border-top-color: #5aa9d4 !important;
+        border-top-color: #98cf78 !important;
     }
 
     .letter,
@@ -2533,6 +2701,33 @@ body.js-motion .gallery-line:focus-within .gallery-track {
         height: 157px;
     }
 
+    .matcha-seal {
+        top: 78px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.18rem;
+    }
+
+    .matcha-leaf {
+        width: 22px;
+        height: 11px;
+    }
+
+    .matcha-leaf.leaf-a {
+        left: 18px;
+        top: 30px;
+    }
+
+    .matcha-leaf.leaf-b {
+        right: 25px;
+        top: 48px;
+    }
+
+    .matcha-steam {
+        bottom: 88px;
+        height: 28px;
+    }
+
     .pocket {
         border-left-width: 117.5px;
         border-right-width: 117.5px;
@@ -2923,6 +3118,29 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     .envelope {
         width: 205px;
         height: 137px;
+    }
+
+    .matcha-seal {
+        top: 68px;
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
+    }
+
+    .matcha-leaf {
+        width: 19px;
+        height: 10px;
+    }
+
+    .matcha-leaf.leaf-c,
+    .matcha-blue-dot.dot-c,
+    .matcha-steam.steam-3 {
+        display: none;
+    }
+
+    .matcha-steam {
+        bottom: 76px;
+        height: 24px;
     }
 
     .pocket {

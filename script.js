@@ -376,6 +376,8 @@ function animateFreshElements(targets, key, options) {
 
 // TAGLINE: Menambahkan charm kecil via JavaScript, jadi CSS fokus ke layout dan bukan sumber animasi utama.
 function decorateMotionElements() {
+    decorateEnvelopeMatcha();
+
     const headings = document.querySelectorAll("main > section > h2, .moving-gallery-intro h2, .curhat-card h2");
     headings.forEach((heading) => {
         if (!heading.querySelector(".js-heading-charm.charm-left")) {
@@ -412,6 +414,38 @@ function decorateMotionElements() {
         charm.textContent = ["\u2661", "\u2726", "\u221E"][index % 3];
         card.appendChild(charm);
     });
+}
+
+function decorateEnvelopeMatcha() {
+    const envelopeElement = document.querySelector(".envelope");
+    if (!envelopeElement || envelopeElement.querySelector(".matcha-envelope-decor")) return;
+
+    const decor = document.createElement("div");
+    decor.className = "matcha-envelope-decor";
+
+    ["leaf-a", "leaf-b", "leaf-c"].forEach((name) => {
+        const leaf = document.createElement("span");
+        leaf.className = `matcha-leaf ${name}`;
+        decor.appendChild(leaf);
+    });
+
+    ["dot-a", "dot-b", "dot-c"].forEach((name) => {
+        const dot = document.createElement("span");
+        dot.className = `matcha-blue-dot ${name}`;
+        decor.appendChild(dot);
+    });
+
+    for (let index = 0; index < 3; index++) {
+        const steam = document.createElement("span");
+        steam.className = `matcha-steam steam-${index + 1}`;
+        decor.appendChild(steam);
+    }
+
+    const seal = document.createElement("span");
+    seal.className = "matcha-seal";
+    seal.textContent = "\u2661";
+
+    envelopeElement.append(decor, seal);
 }
 
 // TAGLINE: Renderer utama animasi dekoratif; jumlah dan durasi otomatis diringankan untuk HP lemah.
@@ -549,6 +583,66 @@ function refreshJavaScriptAnimationRenderer() {
         webKeyframes: [
             { transform: "translate3d(0, -4px, 0)" },
             { transform: "translate3d(0, 5px, 0)" }
+        ]
+    });
+
+    animateFreshElements(".matcha-leaf", "matcha-leaf-float", {
+        duration: 3800 * slowScale,
+        delay: (element, index) => index * 260,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -4, rotate: -7, scale: 0.96 },
+            { translateY: 5, rotate: 8, scale: 1.06 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -4px, 0) rotate(-7deg) scale(0.96)" },
+            { transform: "translate3d(0, 5px, 0) rotate(8deg) scale(1.06)" }
+        ]
+    });
+
+    animateFreshElements(".matcha-blue-dot", "matcha-dot-twinkle", {
+        duration: 2500 * slowScale,
+        delay: (element, index) => index * 220,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { opacity: 0.28, scale: 0.72 },
+            { opacity: 1, scale: 1.18 }
+        ],
+        webKeyframes: [
+            { opacity: 0.28, transform: "scale(0.72)" },
+            { opacity: 1, transform: "scale(1.18)" }
+        ]
+    });
+
+    animateFreshElements(".matcha-steam", "matcha-steam-rise", {
+        duration: 3100 * slowScale,
+        delay: (element, index) => index * 420,
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: 16, opacity: 0, scaleY: 0.7 },
+            { translateY: -8, opacity: 0.7, scaleY: 1 },
+            { translateY: -30, opacity: 0, scaleY: 1.18 }
+        ],
+        webKeyframes: [
+            { opacity: 0, transform: "translate3d(0, 16px, 0) scaleY(0.7)" },
+            { opacity: 0.7, transform: "translate3d(0, -8px, 0) scaleY(1)" },
+            { opacity: 0, transform: "translate3d(0, -30px, 0) scaleY(1.18)" }
+        ]
+    });
+
+    animateFreshElements(".matcha-seal", "matcha-seal-pulse", {
+        duration: 2200 * slowScale,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateX: "-50%", scale: 0.96, rotate: -3 },
+            { translateX: "-50%", scale: 1.06, rotate: 3 }
+        ],
+        webKeyframes: [
+            { transform: "translateX(-50%) scale(0.96) rotate(-3deg)" },
+            { transform: "translateX(-50%) scale(1.06) rotate(3deg)" }
         ]
     });
 
