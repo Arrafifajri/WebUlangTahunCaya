@@ -851,9 +851,11 @@ function initMotionEngine() {
     const motion = {
         startedAt: performance.now(),
         lastFrame: 0,
+        gallerySection: document.querySelector(".moving-gallery-section"),
         gallery: new WeakMap(),
         galleryTracks: [],
-        galleryVersion: -1
+        galleryVersion: -1,
+        documentHidden: false
     };
     const minFrameGap = visualProfile.lowPower ? 32 : 0;
 
@@ -902,11 +904,23 @@ function initMotionEngine() {
 
     function animateGallery(time) {
         refreshGalleryTracks();
-        motion.galleryTracks.forEach(({ line, track }) => {
-            const rect = line.getBoundingClientRect();
-            const isNearViewport = rect.bottom > -160 && rect.top < window.innerHeight + 160;
-            if (!isNearViewport) return;
+        if (!motion.galleryTracks.length) return;
 
+        const section = motion.gallerySection || document.querySelector(".moving-gallery-section");
+        motion.gallerySection = section;
+        if (section) {
+            const sectionRect = section.getBoundingClientRect();
+            const isNearViewport = sectionRect.bottom > -220 && sectionRect.top < window.innerHeight + 220;
+            if (!isNearViewport || motion.documentHidden) {
+                motion.galleryTracks.forEach(({ track }) => {
+                    const state = motion.gallery.get(track);
+                    if (state) state.lastTime = time;
+                });
+                return;
+            }
+        }
+
+        motion.galleryTracks.forEach(({ line, track }) => {
             const state = getGalleryState(track, time);
             if (!state.distance) return;
             const elapsed = Math.min(32, Math.max(0, time - (state.lastTime || time))) / 1000;
@@ -985,6 +999,10 @@ function initMotionEngine() {
     }
 
     requestAnimationFrame(frame);
+    document.addEventListener("visibilitychange", () => {
+        motion.documentHidden = document.hidden;
+        motion.gallery = new WeakMap();
+    });
     window.addEventListener("resize", () => {
         motion.gallery = new WeakMap();
         galleryMotionVersion++;
@@ -1373,7 +1391,7 @@ function getCoprimeStep(length, seedOffset) {
 function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, assignedIds, usedVisibleIds) {
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
-    const cardWidth = isMobile ? 86 : 136;
+    const cardWidth = isMobile ? 58 : 118;
     const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
     const canUseDisjointLinePools = photos.length >= totalLines;
     const base = [];
@@ -1387,8 +1405,8 @@ function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, ass
         ? shuffledPool.filter((photo, photoIndex) => photoIndex % totalLines === lineIndex)
         : shuffledPool;
     const safePool = linePool.length ? linePool : shuffledPool;
-    const maxExtra = isMobile ? 5 : 7;
-    const targetCount = Math.max(visibleCount + maxExtra, 6);
+    const maxExtra = isMobile ? 5 : 6;
+    const targetCount = Math.max(visibleCount + maxExtra, 8);
     const step = getCoprimeStep(safePool.length, lineIndex + galleryShuffleRound + 1);
     let cursor = (galleryShuffleRound * targetCount + lineIndex * (visibleCount + 3)) % safePool.length;
 
@@ -1427,14 +1445,18 @@ function updateGalleryLayoutVars() {
 
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const cardWidth = Math.round(Math.min(
-        width < 480 ? 80 : width < 900 ? 94 : 126,
-        Math.max(width < 480 ? 68 : 90, width * (width < 480 ? 0.2 : width < 900 ? 0.12 : 0.07))
+        width < 480 ? 52 : width < 900 ? 84 : 118,
+        Math.max(width < 480 ? 44 : 72, width * (width < 480 ? 0.13 : width < 900 ? 0.108 : 0.066))
     ));
-    const gap = width < 480 ? 7 : width < 900 ? 8 : 12;
+    const gap = width < 480 ? 1 : width < 900 ? 3 : 4;
 
     gallery.style.setProperty("--gallery-card-width", `${cardWidth}px`);
     gallery.style.setProperty("--gallery-gap", `${gap}px`);
     gallery.style.setProperty("--gallery-card-radius", `${width < 480 ? 14 : 18}px`);
+}
+
+function escapeCssUrl(value) {
+    return String(value || "").replace(/["\\\n\r\f]/g, "\\$&");
 }
 
 // TAGLINE: Galeri bergerak memakai pembagian foto yang merata agar ratusan foto kebagian tampil.
@@ -1483,6 +1505,7 @@ function renderMovingGallery(options = {}) {
 
             const frame = document.createElement("span");
             frame.className = "gallery-photo-frame";
+            frame.style.setProperty("--gallery-photo-fill", `url("${escapeCssUrl(photo.src)}")`);
 
             frame.appendChild(image);
             button.append(frame);
