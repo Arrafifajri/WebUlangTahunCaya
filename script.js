@@ -1392,7 +1392,7 @@ function getCoprimeStep(length, seedOffset) {
 function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, assignedIds, usedVisibleIds) {
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
-    const cardWidth = isMobile ? 58 : 118;
+    const cardWidth = isMobile ? 92 : 152;
     const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
     const canUseDisjointLinePools = photos.length >= totalLines;
     const base = [];
@@ -1406,8 +1406,8 @@ function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, ass
         ? shuffledPool.filter((photo, photoIndex) => photoIndex % totalLines === lineIndex)
         : shuffledPool;
     const safePool = linePool.length ? linePool : shuffledPool;
-    const maxExtra = isMobile ? 2 : 5;
-    const targetCount = Math.max(visibleCount + maxExtra, isMobile ? 6 : 8);
+    const maxExtra = isMobile ? 3 : 5;
+    const targetCount = Math.max(visibleCount + maxExtra, 6);
     const step = getCoprimeStep(safePool.length, lineIndex + galleryShuffleRound + 1);
     let cursor = (galleryShuffleRound * targetCount + lineIndex * (visibleCount + 3)) % safePool.length;
 
@@ -1446,10 +1446,10 @@ function updateGalleryLayoutVars() {
 
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const cardWidth = Math.round(Math.min(
-        width < 480 ? 52 : width < 900 ? 84 : 118,
-        Math.max(width < 480 ? 44 : 72, width * (width < 480 ? 0.13 : width < 900 ? 0.108 : 0.066))
+        width < 480 ? 82 : width < 900 ? 112 : 148,
+        Math.max(width < 480 ? 68 : 98, width * (width < 480 ? 0.205 : width < 900 ? 0.145 : 0.084))
     ));
-    const gap = width < 480 ? 1 : width < 900 ? 3 : 4;
+    const gap = width < 480 ? 6 : width < 900 ? 8 : 10;
 
     gallery.style.setProperty("--gallery-card-width", `${cardWidth}px`);
     gallery.style.setProperty("--gallery-gap", `${gap}px`);
