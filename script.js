@@ -695,12 +695,12 @@ function refreshJavaScriptAnimationRenderer() {
         direction: "alternate",
         easing: "easeInOutSine",
         animeKeyframes: [
-            { translateY: -2, rotate: -7, scale: 0.96 },
-            { translateY: 4, rotate: 8, scale: 1.08 }
+            { translateX: "-50%", translateY: -2, rotate: -7, scale: 0.96 },
+            { translateX: "-50%", translateY: 4, rotate: 8, scale: 1.08 }
         ],
         webKeyframes: [
-            { transform: "translate3d(0, -2px, 0) rotate(-7deg) scale(0.96)" },
-            { transform: "translate3d(0, 4px, 0) rotate(8deg) scale(1.08)" }
+            { transform: "translate3d(-50%, -2px, 0) rotate(-7deg) scale(0.96)" },
+            { transform: "translate3d(-50%, 4px, 0) rotate(8deg) scale(1.08)" }
         ]
     });
 

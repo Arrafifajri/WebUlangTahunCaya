@@ -1447,16 +1447,14 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     position: relative;
     flex: 0 0 auto;
     width: var(--gallery-card-width, clamp(128px, 12vw, 190px));
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1.06;
     overflow: visible;
     border: 0;
-    border-radius: calc(var(--gallery-card-radius, 18px) + 8px);
-    background:
-        radial-gradient(circle at 18% 14%, rgba(255,255,255,0.95), transparent 24%),
-        linear-gradient(145deg, rgba(255,232,239,0.92), rgba(223,243,255,0.9) 52%, rgba(255,255,255,0.96));
+    border-radius: 0;
+    background: transparent;
     box-shadow:
-        0 14px 28px rgba(0,119,182,0.09),
-        0 10px 22px rgba(255,111,145,0.08);
+        0 18px 34px rgba(0,119,182,0.08),
+        0 12px 28px rgba(255,111,145,0.1);
     cursor: pointer;
     user-select: none;
     -webkit-user-drag: none;
@@ -1464,7 +1462,7 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     contain: layout paint;
     backface-visibility: hidden;
     transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
-    padding: 8px;
+    padding: 0;
     isolation: isolate;
 }
 
@@ -1472,14 +1470,21 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     position: absolute;
     z-index: 0;
     left: 50%;
-    top: 52%;
-    width: 68%;
-    height: 68%;
-    background: linear-gradient(135deg, rgba(255,179,198,0.38), rgba(135,206,235,0.26));
-    border-radius: 28% 28% 42% 42%;
+    top: 54%;
+    width: 82%;
+    height: 82%;
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.92), transparent 22%),
+        linear-gradient(135deg, rgba(255,151,180,0.74), rgba(135,206,235,0.64) 62%, rgba(255,255,255,0.9));
+    border: 3px solid rgba(255,255,255,0.86);
+    border-radius: 22% 22% 36% 36%;
     transform: translate(-50%, -50%) rotate(45deg);
-    opacity: 0.62;
+    opacity: 0.92;
     pointer-events: none;
+    box-shadow:
+        0 18px 34px rgba(255,111,145,0.18),
+        0 16px 30px rgba(0,119,182,0.13),
+        inset 0 0 0 1px rgba(255,255,255,0.42);
     will-change: transform, opacity;
 }
 
@@ -1487,10 +1492,13 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 .gallery-heart-aura::after {
     content: "";
     position: absolute;
+    z-index: -1;
     width: 100%;
     height: 100%;
     border-radius: 50%;
     background: inherit;
+    border: inherit;
+    box-shadow: inherit;
 }
 
 .gallery-heart-aura::before {
@@ -1508,22 +1516,24 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     z-index: 2;
     display: grid;
     place-items: center;
-    width: 100%;
-    height: 100%;
-    border: 1px solid rgba(255,255,255,0.86);
-    border-radius: var(--gallery-card-radius, 18px);
+    width: 72%;
+    height: 70%;
+    margin: 14% auto 0;
+    border: 4px solid rgba(255,255,255,0.95);
+    border-radius: calc(var(--gallery-card-radius, 18px) + 2px);
     background:
         linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,252,255,0.96)),
         radial-gradient(circle at 50% 50%, rgba(255,179,198,0.12), transparent 60%);
     box-shadow:
         inset 0 0 0 1px rgba(135,206,235,0.18),
-        0 8px 16px rgba(0,119,182,0.08);
-    overflow: visible;
+        0 12px 22px rgba(0,119,182,0.14),
+        0 8px 18px rgba(255,111,145,0.12);
+    overflow: hidden;
 }
 
 .gallery-marquee-card img {
-    width: calc(100% - 12px);
-    height: calc(100% - 12px);
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
     display: block;
     margin: auto;
     object-fit: contain;
@@ -1537,20 +1547,32 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 .gallery-heart-pin {
     position: absolute;
     z-index: 3;
-    right: 4px;
-    top: 4px;
-    display: grid;
+    left: 50%;
+    bottom: 3%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
     place-items: center;
-    width: 30px;
+    min-width: 54px;
     height: 30px;
+    padding: 0 10px;
     border-radius: 50%;
     background: linear-gradient(145deg, #ffffff, #ffe8ef 52%, #dff3ff);
     color: #0077b6;
     font-size: 1.05rem;
     font-weight: 900;
-    box-shadow: 0 10px 20px rgba(0,119,182,0.12);
+    box-shadow: 0 10px 20px rgba(0,119,182,0.14);
     pointer-events: none;
+    transform: translateX(-50%);
     will-change: transform;
+}
+
+.gallery-heart-pin::before,
+.gallery-heart-pin::after {
+    content: "♡";
+    color: rgba(255,111,145,0.72);
+    font-size: 0.82rem;
 }
 
 .gallery-marquee-card:hover img,
@@ -3194,7 +3216,22 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 
     .gallery-marquee-card {
         width: var(--gallery-card-width, 128px);
+        border-radius: 0;
+    }
+
+    .gallery-photo-frame {
+        width: 74%;
+        height: 68%;
+        margin-top: 15%;
+        border-width: 3px;
         border-radius: var(--gallery-card-radius, 14px);
+    }
+
+    .gallery-heart-pin {
+        min-width: 46px;
+        height: 26px;
+        font-size: 0.92rem;
+        bottom: 2%;
     }
 
     .video-section {
