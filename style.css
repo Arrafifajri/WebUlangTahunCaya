@@ -1359,31 +1359,58 @@ main > section > .js-section-charm.charm-1 {
 }
 
 .moving-gallery-stage {
+    --gallery-heart-clip: polygon(
+        50% 96%,
+        43% 90%,
+        25% 78%,
+        12% 64%,
+        4% 48%,
+        3% 31%,
+        9% 17%,
+        21% 8%,
+        35% 6%,
+        45% 13%,
+        50% 23%,
+        55% 13%,
+        65% 6%,
+        79% 8%,
+        91% 17%,
+        97% 31%,
+        96% 48%,
+        88% 64%,
+        75% 78%,
+        57% 90%
+    );
     position: relative;
     z-index: 2;
-    width: min(calc(100% - 18px), 1180px);
+    width: min(calc(100% - 18px), 1120px);
+    height: clamp(540px, 88vw, 920px);
     margin: 0 auto;
-    padding: clamp(30px, 5vw, 64px) 0;
+    padding: 0;
     overflow: visible;
 }
 
 .moving-gallery-heart {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    width: min(138vw, 1180px);
-    height: min(138vw, 1180px);
-    border-radius: 22% 22% 30% 30%;
+    inset: 0;
+    -webkit-clip-path: var(--gallery-heart-clip);
+    clip-path: var(--gallery-heart-clip);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 90'%3E%3Cpath fill='black' d='M50 86C18 62 2 45 2 25C2 10 14 1 28 1C39 1 47 8 50 17C53 8 61 1 72 1C86 1 98 10 98 25C98 45 82 62 50 86Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 90'%3E%3Cpath fill='black' d='M50 86C18 62 2 45 2 25C2 10 14 1 28 1C39 1 47 8 50 17C53 8 61 1 72 1C86 1 98 10 98 25C98 45 82 62 50 86Z'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
     background:
-        radial-gradient(circle at 30% 26%, rgba(255,255,255,0.78), transparent 17%),
-        linear-gradient(135deg, rgba(210,244,220,0.62), rgba(190,232,255,0.54) 47%, rgba(255,185,205,0.5));
-    box-shadow:
-        0 32px 86px rgba(0,119,182,0.12),
-        0 18px 58px rgba(121,196,143,0.13),
-        inset 0 0 0 12px rgba(255,255,255,0.35);
-    opacity: 0.92;
+        radial-gradient(circle at 32% 22%, rgba(255,255,255,0.7), transparent 15%),
+        radial-gradient(circle at 70% 18%, rgba(255,255,255,0.58), transparent 13%),
+        linear-gradient(135deg, #99d8ae 0%, #80c9ee 48%, #f2a8c2 100%);
+    filter: drop-shadow(0 28px 48px rgba(0,119,182,0.18)) drop-shadow(0 18px 38px rgba(121,196,143,0.16));
+    opacity: 1;
     pointer-events: none;
-    transform: translate(-50%, -48%) rotate(45deg) translateZ(0);
+    transform: translateZ(0);
     z-index: 0;
     backface-visibility: hidden;
     will-change: transform, opacity;
@@ -1391,23 +1418,29 @@ main > section > .js-section-charm.charm-1 {
 
 .moving-gallery-heart::before,
 .moving-gallery-heart::after {
-    content: "";
+    content: none;
+}
+
+.moving-gallery-heart-window {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: inherit;
-    box-shadow: none;
-}
-
-.moving-gallery-heart::before {
-    left: -50%;
-    top: 0;
-}
-
-.moving-gallery-heart::after {
-    left: 0;
-    top: -50%;
+    inset: clamp(18px, 2.4vw, 34px);
+    z-index: 2;
+    overflow: hidden;
+    -webkit-clip-path: var(--gallery-heart-clip);
+    clip-path: var(--gallery-heart-clip);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 90'%3E%3Cpath fill='black' d='M50 86C18 62 2 45 2 25C2 10 14 1 28 1C39 1 47 8 50 17C53 8 61 1 72 1C86 1 98 10 98 25C98 45 82 62 50 86Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 90'%3E%3Cpath fill='black' d='M50 86C18 62 2 45 2 25C2 10 14 1 28 1C39 1 47 8 50 17C53 8 61 1 72 1C86 1 98 10 98 25C98 45 82 62 50 86Z'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    background:
+        radial-gradient(circle at 32% 25%, rgba(255,255,255,0.52), transparent 18%),
+        linear-gradient(180deg, rgba(238,251,255,0.9), rgba(229,248,255,0.78));
+    contain: layout paint;
+    transform: translateZ(0);
 }
 
 .moving-gallery {
@@ -1415,9 +1448,11 @@ main > section > .js-section-charm.charm-1 {
     z-index: 2;
     display: grid;
     gap: var(--gallery-gap, 12px);
-    width: min(100%, 1000px);
-    margin: 0 auto;
-    padding: clamp(22px, 4vw, 48px) 0;
+    align-content: center;
+    width: 116%;
+    height: 100%;
+    margin: 0 0 0 -8%;
+    padding: clamp(34px, 6vw, 74px) 0 clamp(26px, 4vw, 58px);
     overflow: visible;
 }
 
@@ -1440,7 +1475,7 @@ main > section > .js-section-charm.charm-1 {
 .gallery-love-spark.love-7 { right: 30%; top: 54%; color: rgba(0,119,182,0.26); }
 
 .gallery-line {
-    width: 100%;
+    width: var(--gallery-line-width, 100%);
     max-width: min(100%, 1000px);
     margin: 0 auto;
     overflow-x: auto;
@@ -1454,6 +1489,12 @@ main > section > .js-section-charm.charm-1 {
     contain: layout paint;
     contain-intrinsic-size: 160px;
 }
+
+.gallery-line:nth-child(1) { --gallery-line-width: 58%; }
+.gallery-line:nth-child(2) { --gallery-line-width: 82%; }
+.gallery-line:nth-child(3) { --gallery-line-width: 98%; }
+.gallery-line:nth-child(4) { --gallery-line-width: 78%; }
+.gallery-line:nth-child(5) { --gallery-line-width: 52%; }
 
 .gallery-line.is-dragging {
     cursor: grabbing;
@@ -1502,7 +1543,7 @@ body.js-motion .gallery-line:focus-within .gallery-track {
     position: relative;
     flex: 0 0 auto;
     width: var(--gallery-card-width, clamp(112px, 11vw, 176px));
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1.12;
     overflow: hidden;
     border: 0;
     border-radius: var(--gallery-card-radius, 18px);
@@ -3189,27 +3230,37 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 
     .moving-gallery-stage {
         width: min(calc(100% - 10px), 560px);
-        padding: 22px 0;
+        height: clamp(520px, 142vw, 670px);
     }
 
     .moving-gallery-heart {
-        width: min(154vw, 680px);
-        height: min(154vw, 680px);
-        transform: translate(-50%, -48%) rotate(45deg) translateZ(0);
+        transform: translateZ(0);
+    }
+
+    .moving-gallery-heart-window {
+        inset: 12px;
     }
 
     .moving-gallery {
-        gap: var(--gallery-gap, 8px);
-        width: min(100%, 520px);
-        padding: 16px 0;
+        gap: var(--gallery-gap, 7px);
+        width: 122%;
+        height: 100%;
+        margin-left: -11%;
+        padding: 30px 0 20px;
     }
 
     .gallery-track {
-        gap: var(--gallery-gap, 8px);
+        gap: var(--gallery-gap, 7px);
     }
 
+    .gallery-line:nth-child(1) { --gallery-line-width: 66%; }
+    .gallery-line:nth-child(2) { --gallery-line-width: 88%; }
+    .gallery-line:nth-child(3) { --gallery-line-width: 100%; }
+    .gallery-line:nth-child(4) { --gallery-line-width: 84%; }
+    .gallery-line:nth-child(5) { --gallery-line-width: 62%; }
+
     .gallery-marquee-card {
-        width: var(--gallery-card-width, 122px);
+        width: var(--gallery-card-width, 78px);
         border-radius: var(--gallery-card-radius, 14px);
         padding: 5px;
     }

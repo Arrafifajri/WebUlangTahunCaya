@@ -666,12 +666,12 @@ function refreshJavaScriptAnimationRenderer() {
             direction: "alternate",
             easing: "easeInOutSine",
             animeKeyframes: [
-                { translateX: "-50%", translateY: "-48%", rotate: 45, scale: 0.985, opacity: 0.84 },
-                { translateX: "-50%", translateY: "-48%", rotate: 45, scale: 1.018, opacity: 0.96 }
+                { scale: 0.992, opacity: 0.92 },
+                { scale: 1.006, opacity: 1 }
             ],
             webKeyframes: [
-                { opacity: 0.84, transform: "translate3d(-50%, -48%, 0) rotate(45deg) scale(0.985)" },
-                { opacity: 0.96, transform: "translate3d(-50%, -48%, 0) rotate(45deg) scale(1.018)" }
+                { opacity: 0.92, transform: "scale(0.992)" },
+                { opacity: 1, transform: "scale(1.006)" }
             ]
         });
 
@@ -1373,7 +1373,7 @@ function getCoprimeStep(length, seedOffset) {
 function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, assignedIds, usedVisibleIds) {
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
-    const cardWidth = isMobile ? 132 : 198;
+    const cardWidth = isMobile ? 86 : 136;
     const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
     const canUseDisjointLinePools = photos.length >= totalLines;
     const base = [];
@@ -1427,10 +1427,10 @@ function updateGalleryLayoutVars() {
 
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const cardWidth = Math.round(Math.min(
-        width < 480 ? 124 : width < 900 ? 154 : 176,
-        Math.max(width < 480 ? 104 : 126, width * (width < 480 ? 0.3 : width < 900 ? 0.21 : 0.105))
+        width < 480 ? 80 : width < 900 ? 94 : 126,
+        Math.max(width < 480 ? 68 : 90, width * (width < 480 ? 0.2 : width < 900 ? 0.12 : 0.07))
     ));
-    const gap = width < 480 ? 8 : width < 900 ? 10 : 12;
+    const gap = width < 480 ? 7 : width < 900 ? 8 : 12;
 
     gallery.style.setProperty("--gallery-card-width", `${cardWidth}px`);
     gallery.style.setProperty("--gallery-gap", `${gap}px`);
