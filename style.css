@@ -52,7 +52,6 @@ body.modal-open {
 
 body.js-motion .gate-countdown,
 body.js-motion .envelope,
-body.js-motion .gallery-track,
 body.js-motion .wish-text,
 body.js-motion .swinging,
 body.js-motion .swinging-reverse,
@@ -3311,6 +3310,24 @@ body.js-motion .gallery-line:focus-within .gallery-track {
 
     .gallery-track {
         gap: var(--gallery-gap, 1px);
+    }
+
+    .gallery-line:nth-child(odd) .gallery-track {
+        animation-play-state: paused;
+        transform: translate3d(-12%, 0, 0);
+    }
+
+    .gallery-photo-frame::before {
+        background-image:
+            linear-gradient(135deg, rgba(255,255,255,0.18), rgba(224,247,255,0.42)),
+            radial-gradient(circle at 24% 20%, rgba(255,255,255,0.5), transparent 34%),
+            linear-gradient(135deg, rgba(126,215,176,0.28), rgba(98,201,239,0.26), rgba(243,165,200,0.22));
+        opacity: 0.78;
+        transform: none;
+    }
+
+    .gallery-photo-frame::after {
+        box-shadow: inset 0 0 8px rgba(255,255,255,0.48), inset 0 0 0 1px rgba(255,255,255,0.44);
     }
 
     .gallery-line:nth-child(1) { --gallery-line-width: 76%; }

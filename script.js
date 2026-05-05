@@ -847,6 +847,7 @@ function initMotionEngine() {
     if (reduceMotion) return;
 
     document.body.classList.add("js-motion");
+    const useCssGalleryMotion = true;
 
     const motion = {
         startedAt: performance.now(),
@@ -994,7 +995,7 @@ function initMotionEngine() {
             return;
         }
         motion.lastFrame = time;
-        animateGallery(time);
+        if (!useCssGalleryMotion) animateGallery(time);
         requestAnimationFrame(frame);
     }
 
@@ -1405,8 +1406,8 @@ function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, ass
         ? shuffledPool.filter((photo, photoIndex) => photoIndex % totalLines === lineIndex)
         : shuffledPool;
     const safePool = linePool.length ? linePool : shuffledPool;
-    const maxExtra = isMobile ? 5 : 6;
-    const targetCount = Math.max(visibleCount + maxExtra, 8);
+    const maxExtra = isMobile ? 2 : 5;
+    const targetCount = Math.max(visibleCount + maxExtra, isMobile ? 6 : 8);
     const step = getCoprimeStep(safePool.length, lineIndex + galleryShuffleRound + 1);
     let cursor = (galleryShuffleRound * targetCount + lineIndex * (visibleCount + 3)) % safePool.length;
 
@@ -1497,10 +1498,10 @@ function renderMovingGallery(options = {}) {
             const image = document.createElement("img");
             image.src = photo.src;
             image.alt = photo.title;
-            image.loading = photoIndex < 3 ? "eager" : "lazy";
+            image.loading = trackIndex < 3 && photoIndex < 2 ? "eager" : "lazy";
             image.decoding = "async";
             image.draggable = false;
-            if (photoIndex < 2) image.fetchPriority = "high";
+            if (trackIndex < 2 && photoIndex < 1) image.fetchPriority = "high";
             image.onerror = () => button.classList.add("missing-gallery-photo");
 
             const frame = document.createElement("span");
