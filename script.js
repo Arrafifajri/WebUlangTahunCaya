@@ -377,6 +377,7 @@ function animateFreshElements(targets, key, options) {
 // TAGLINE: Menambahkan charm kecil via JavaScript, jadi CSS fokus ke layout dan bukan sumber animasi utama.
 function decorateMotionElements() {
     decorateEnvelopeMatcha();
+    decorateMovingGalleryLove();
 
     const headings = document.querySelectorAll("main > section > h2, .moving-gallery-intro h2, .curhat-card h2");
     headings.forEach((heading) => {
@@ -446,6 +447,18 @@ function decorateEnvelopeMatcha() {
     seal.textContent = "\u2661";
 
     envelopeElement.append(decor, seal);
+}
+
+function decorateMovingGalleryLove() {
+    const section = document.querySelector(".moving-gallery-section");
+    if (!section || section.querySelector(".gallery-love-spark")) return;
+
+    for (let index = 0; index < 7; index++) {
+        const spark = document.createElement("span");
+        spark.className = `gallery-love-spark love-${index + 1}`;
+        spark.textContent = index % 3 === 0 ? "\u2661" : index % 3 === 1 ? "\u2665" : "\u2726";
+        section.appendChild(spark);
+    }
 }
 
 // TAGLINE: Renderer utama animasi dekoratif; jumlah dan durasi otomatis diringankan untuk HP lemah.
@@ -643,6 +656,51 @@ function refreshJavaScriptAnimationRenderer() {
         webKeyframes: [
             { transform: "translateX(-50%) scale(0.96) rotate(-3deg)" },
             { transform: "translateX(-50%) scale(1.06) rotate(3deg)" }
+        ]
+    });
+
+    animateFreshElements(".gallery-love-spark", "gallery-love-spark", {
+        duration: 6200 * slowScale,
+        delay: (element, index) => index * 260,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -10, translateX: -8, opacity: 0.18, rotate: -8, scale: 0.82 },
+            { translateY: 12, translateX: 10, opacity: 0.68, rotate: 9, scale: 1.12 }
+        ],
+        webKeyframes: [
+            { opacity: 0.18, transform: "translate3d(-8px, -10px, 0) rotate(-8deg) scale(0.82)" },
+            { opacity: 0.68, transform: "translate3d(10px, 12px, 0) rotate(9deg) scale(1.12)" }
+        ]
+    });
+
+    animateFreshElements(".gallery-heart-aura", "gallery-heart-aura", {
+        duration: 4200 * slowScale,
+        delay: (element, index) => index * 70,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateX: "-50%", translateY: "-50%", rotate: 45, scale: 0.94, opacity: 0.5 },
+            { translateX: "-50%", translateY: "-50%", rotate: 45, scale: 1.08, opacity: 0.78 }
+        ],
+        webKeyframes: [
+            { opacity: 0.5, transform: "translate(-50%, -50%) rotate(45deg) scale(0.94)" },
+            { opacity: 0.78, transform: "translate(-50%, -50%) rotate(45deg) scale(1.08)" }
+        ]
+    });
+
+    animateFreshElements(".gallery-heart-pin", "gallery-heart-pin", {
+        duration: 3400 * slowScale,
+        delay: (element, index) => index * 80,
+        direction: "alternate",
+        easing: "easeInOutSine",
+        animeKeyframes: [
+            { translateY: -2, rotate: -7, scale: 0.96 },
+            { translateY: 4, rotate: 8, scale: 1.08 }
+        ],
+        webKeyframes: [
+            { transform: "translate3d(0, -2px, 0) rotate(-7deg) scale(0.96)" },
+            { transform: "translate3d(0, 4px, 0) rotate(8deg) scale(1.08)" }
         ]
     });
 
@@ -1458,11 +1516,21 @@ function renderMovingGallery(options = {}) {
             if (photoIndex < 4) image.fetchPriority = "high";
             image.onerror = () => button.classList.add("missing-gallery-photo");
 
-            button.append(image);
+            const aura = document.createElement("span");
+            aura.className = "gallery-heart-aura";
+            const frame = document.createElement("span");
+            frame.className = "gallery-photo-frame";
+            const pin = document.createElement("span");
+            pin.className = "gallery-heart-pin";
+            pin.textContent = "\u2661";
+
+            frame.appendChild(image);
+            button.append(aura, frame, pin);
             track.appendChild(button);
         });
     });
     enableGalleryDrag(gallery);
+    queueJavaScriptAnimationRefresh();
 }
 
 function enableGalleryDrag(gallery) {
