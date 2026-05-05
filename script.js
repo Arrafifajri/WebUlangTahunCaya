@@ -453,7 +453,8 @@ function decorateMovingGalleryLove() {
     const section = document.querySelector(".moving-gallery-section");
     if (!section || section.querySelector(".gallery-love-spark")) return;
 
-    for (let index = 0; index < 7; index++) {
+    const sparkCount = visualProfile.lowPower ? 2 : 3;
+    for (let index = 0; index < sparkCount; index++) {
         const spark = document.createElement("span");
         spark.className = `gallery-love-spark love-${index + 1}`;
         spark.textContent = index % 3 === 0 ? "\u2661" : index % 3 === 1 ? "\u2665" : "\u2726";
@@ -659,50 +660,36 @@ function refreshJavaScriptAnimationRenderer() {
         ]
     });
 
-    animateFreshElements(".gallery-love-spark", "gallery-love-spark", {
-        duration: 6200 * slowScale,
-        delay: (element, index) => index * 260,
-        direction: "alternate",
-        easing: "easeInOutSine",
-        animeKeyframes: [
-            { translateY: -10, translateX: -8, opacity: 0.18, rotate: -8, scale: 0.82 },
-            { translateY: 12, translateX: 10, opacity: 0.68, rotate: 9, scale: 1.12 }
-        ],
-        webKeyframes: [
-            { opacity: 0.18, transform: "translate3d(-8px, -10px, 0) rotate(-8deg) scale(0.82)" },
-            { opacity: 0.68, transform: "translate3d(10px, 12px, 0) rotate(9deg) scale(1.12)" }
-        ]
-    });
+    if (!visualProfile.lowPower) {
+        animateFreshElements(".moving-gallery-heart", "gallery-heart-breathe", {
+            duration: 8200 * slowScale,
+            direction: "alternate",
+            easing: "easeInOutSine",
+            animeKeyframes: [
+                { translateX: "-50%", translateY: "-48%", rotate: 45, scale: 0.985, opacity: 0.84 },
+                { translateX: "-50%", translateY: "-48%", rotate: 45, scale: 1.018, opacity: 0.96 }
+            ],
+            webKeyframes: [
+                { opacity: 0.84, transform: "translate3d(-50%, -48%, 0) rotate(45deg) scale(0.985)" },
+                { opacity: 0.96, transform: "translate3d(-50%, -48%, 0) rotate(45deg) scale(1.018)" }
+            ]
+        });
 
-    animateFreshElements(".gallery-heart-aura", "gallery-heart-aura", {
-        duration: 4200 * slowScale,
-        delay: (element, index) => index * 70,
-        direction: "alternate",
-        easing: "easeInOutSine",
-        animeKeyframes: [
-            { translateX: "-50%", translateY: "-50%", rotate: 45, scale: 0.94, opacity: 0.5 },
-            { translateX: "-50%", translateY: "-50%", rotate: 45, scale: 1.08, opacity: 0.78 }
-        ],
-        webKeyframes: [
-            { opacity: 0.5, transform: "translate(-50%, -50%) rotate(45deg) scale(0.94)" },
-            { opacity: 0.78, transform: "translate(-50%, -50%) rotate(45deg) scale(1.08)" }
-        ]
-    });
-
-    animateFreshElements(".gallery-heart-pin", "gallery-heart-pin", {
-        duration: 3400 * slowScale,
-        delay: (element, index) => index * 80,
-        direction: "alternate",
-        easing: "easeInOutSine",
-        animeKeyframes: [
-            { translateX: "-50%", translateY: -2, rotate: -7, scale: 0.96 },
-            { translateX: "-50%", translateY: 4, rotate: 8, scale: 1.08 }
-        ],
-        webKeyframes: [
-            { transform: "translate3d(-50%, -2px, 0) rotate(-7deg) scale(0.96)" },
-            { transform: "translate3d(-50%, 4px, 0) rotate(8deg) scale(1.08)" }
-        ]
-    });
+        animateFreshElements(".gallery-love-spark", "gallery-love-spark", {
+            duration: 7200 * slowScale,
+            delay: (element, index) => index * 360,
+            direction: "alternate",
+            easing: "easeInOutSine",
+            animeKeyframes: [
+                { translateY: -7, translateX: -5, opacity: 0.18, rotate: -6, scale: 0.86 },
+                { translateY: 8, translateX: 7, opacity: 0.58, rotate: 7, scale: 1.08 }
+            ],
+            webKeyframes: [
+                { opacity: 0.18, transform: "translate3d(-5px, -7px, 0) rotate(-6deg) scale(0.86)" },
+                { opacity: 0.58, transform: "translate3d(7px, 8px, 0) rotate(7deg) scale(1.08)" }
+            ]
+        });
+    }
 
     animateFreshElements(".js-heading-charm", "heading-charm", {
         duration: 3600 * slowScale,
@@ -868,7 +855,7 @@ function initMotionEngine() {
         galleryTracks: [],
         galleryVersion: -1
     };
-    const minFrameGap = visualProfile.lowPower ? 42 : 0;
+    const minFrameGap = visualProfile.lowPower ? 32 : 0;
 
     function refreshGalleryTracks() {
         if (motion.galleryVersion === galleryMotionVersion) return;
@@ -1386,71 +1373,49 @@ function getCoprimeStep(length, seedOffset) {
 function buildGalleryLinePhotos(photos, lineIndex, totalLines, shuffledPool, assignedIds, usedVisibleIds) {
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const isMobile = width < 768;
-    const cardWidth = isMobile ? 146 : 204;
+    const cardWidth = isMobile ? 132 : 198;
     const visibleCount = Math.max(3, Math.ceil(width / cardWidth) + 1);
     const canUseDisjointLinePools = photos.length >= totalLines;
     const base = [];
-    const step = getCoprimeStep(shuffledPool.length, lineIndex + 1);
-    let cursor = (lineIndex * visibleCount + lineIndex * lineIndex * 5) % shuffledPool.length;
 
     function photoId(photo) {
         return photo.src || photo.title || JSON.stringify(photo);
     }
 
-    function pickCandidate(index) {
-        const isVisibleSlot = index < visibleCount;
+    // TAGLINE: Tampilkan subset kecil per putaran agar 200+ foto tetap ringan di HP.
+    const linePool = canUseDisjointLinePools
+        ? shuffledPool.filter((photo, photoIndex) => photoIndex % totalLines === lineIndex)
+        : shuffledPool;
+    const safePool = linePool.length ? linePool : shuffledPool;
+    const maxExtra = isMobile ? 5 : 7;
+    const targetCount = Math.max(visibleCount + maxExtra, 6);
+    const step = getCoprimeStep(safePool.length, lineIndex + galleryShuffleRound + 1);
+    let cursor = (galleryShuffleRound * targetCount + lineIndex * (visibleCount + 3)) % safePool.length;
 
-        for (let attempt = 0; attempt < shuffledPool.length; attempt++) {
-            const candidateIndex = (cursor + attempt * step) % shuffledPool.length;
-            const candidate = shuffledPool[candidateIndex];
-            const id = photoId(candidate);
-            const belongsToLine = candidateIndex % totalLines === lineIndex;
-            const alreadyAssigned = assignedIds.has(id);
-            const visibleDuplicate = usedVisibleIds.has(id);
-
-            if (canUseDisjointLinePools && (!belongsToLine || alreadyAssigned)) continue;
-            if (isVisibleSlot && visibleDuplicate && usedVisibleIds.size < photos.length) continue;
-
-            cursor = (candidateIndex + step) % shuffledPool.length;
-            assignedIds.add(id);
-            if (isVisibleSlot) usedVisibleIds.add(id);
-            return candidate;
-        }
-
-        for (let attempt = 0; attempt < shuffledPool.length; attempt++) {
-            const candidateIndex = (cursor + attempt * step) % shuffledPool.length;
-            const candidate = shuffledPool[candidateIndex];
+    for (let index = 0; index < targetCount; index++) {
+        let selected = null;
+        for (let attempt = 0; attempt < safePool.length; attempt++) {
+            const candidateIndex = (cursor + attempt * step) % safePool.length;
+            const candidate = safePool[candidateIndex];
             const id = photoId(candidate);
             const isVisibleSlot = index < visibleCount;
 
+            if (assignedIds.has(id) && assignedIds.size < photos.length) continue;
             if (isVisibleSlot && usedVisibleIds.has(id) && usedVisibleIds.size < photos.length) continue;
 
-            cursor = (candidateIndex + step) % shuffledPool.length;
+            selected = candidate;
+            cursor = (candidateIndex + step) % safePool.length;
+            assignedIds.add(id);
             if (isVisibleSlot) usedVisibleIds.add(id);
-            return candidate;
+            break;
         }
 
-        const fallback = shuffledPool[cursor % shuffledPool.length];
-        cursor = (cursor + step) % shuffledPool.length;
-        return fallback;
-    }
+        if (!selected) {
+            selected = safePool[cursor % safePool.length];
+            cursor = (cursor + step) % safePool.length;
+        }
 
-    if (canUseDisjointLinePools) {
-        shuffledPool.forEach((photo, photoIndex) => {
-            if (photoIndex % totalLines === lineIndex) {
-                const id = photoId(photo);
-                assignedIds.add(id);
-                if (base.length < visibleCount && !usedVisibleIds.has(id)) {
-                    usedVisibleIds.add(id);
-                }
-                base.push(photo);
-            }
-        });
-    }
-
-    const minNeeded = visibleCount + 4;
-    for (let index = base.length; index < minNeeded; index++) {
-        base.push(pickCandidate(index));
+        base.push(selected);
     }
 
     return [...base, ...base];
@@ -1462,10 +1427,10 @@ function updateGalleryLayoutVars() {
 
     const width = window.innerWidth || document.documentElement.clientWidth || 360;
     const cardWidth = Math.round(Math.min(
-        width < 480 ? 136 : width < 900 ? 164 : 190,
-        Math.max(width < 480 ? 112 : 130, width * (width < 480 ? 0.34 : width < 900 ? 0.24 : 0.12))
+        width < 480 ? 124 : width < 900 ? 154 : 176,
+        Math.max(width < 480 ? 104 : 126, width * (width < 480 ? 0.3 : width < 900 ? 0.21 : 0.105))
     ));
-    const gap = width < 480 ? 10 : width < 900 ? 12 : 14;
+    const gap = width < 480 ? 8 : width < 900 ? 10 : 12;
 
     gallery.style.setProperty("--gallery-card-width", `${cardWidth}px`);
     gallery.style.setProperty("--gallery-gap", `${gap}px`);
@@ -1510,22 +1475,17 @@ function renderMovingGallery(options = {}) {
             const image = document.createElement("img");
             image.src = photo.src;
             image.alt = photo.title;
-            image.loading = photoIndex < 6 ? "eager" : "lazy";
+            image.loading = photoIndex < 3 ? "eager" : "lazy";
             image.decoding = "async";
             image.draggable = false;
-            if (photoIndex < 4) image.fetchPriority = "high";
+            if (photoIndex < 2) image.fetchPriority = "high";
             image.onerror = () => button.classList.add("missing-gallery-photo");
 
-            const aura = document.createElement("span");
-            aura.className = "gallery-heart-aura";
             const frame = document.createElement("span");
             frame.className = "gallery-photo-frame";
-            const pin = document.createElement("span");
-            pin.className = "gallery-heart-pin";
-            pin.textContent = "\u2661";
 
             frame.appendChild(image);
-            button.append(aura, frame, pin);
+            button.append(frame);
             track.appendChild(button);
         });
     });
